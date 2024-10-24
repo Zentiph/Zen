@@ -5,9 +5,9 @@ Zen's syntax is aimed to have a similar feeling to Python and C++.
 // comments look like this.
 
 /.
-   long comments
-   look like this.
-./
+ . long comments
+ . look like this.
+ ./
 
 int my_var = 10 // variables look like this.
 
@@ -25,7 +25,7 @@ int my_var = 10 // variables look like this.
 2 != -2
 
 // arrays look like this.
-my_array = [1, 2, 3, 4]
+array[int] my_array = [1, 2, 3, 4]
 
 // functions look like this.
 fn my_func(int x, int y, int div=1) -> float {
@@ -37,7 +37,7 @@ fn take_func(function[int] func, int x) -> int {
     return func(x) + 3
 }
 
-take_func(int x => x * x, 2)
+take_func(int x => int {x * x}, 2)
 
 // classes look like this.
 class MyClass {
@@ -51,48 +51,52 @@ class MyClass {
         this.a += b
     }
 
+    private int a;
+
     @operator_overload("+")
-    fn add(MyClass other) {
+    private fn add(MyClass other) {
         return MyClass(this.a + other.a)
     }
 }
 
-class Inherited(MyClass) {
-    constructor(int a) {
-        super.constructor(a)
-    }
-}
+class Inherited(MyClass) {}
 
 Inherited instance = Inherited(2)
 instance.method(2) // -> instance.a = 4
 
 // conditionals
-if (1 == 2) {
+if 1 == 2 {
     print("what")
-} elseif (1 == -1) {
+} elseif 1 == -1 {
     print("seriously?")
 } else {
     print("made it")
 }
 
+// single-line if statement
+if true {print("true")} else {print("false")}
+
 // for loops
 array[int] arr = [1, 2, 3]
-for (i) in (arr) {
+for i in arr {
     arr[i] = (i + 2) / 3
+}
+for i in range(10) {
+    print(i)
 }
 
 map[str, int] my_map = ["Abby": 20, "Brian": 24]
-for (k, v) in (my_map) {
+for k, v in my_map {
     print(k, "is", v, "years old")
 }
 
 // while loops
-while (true) {
+while true {
     print("stuck")
 }
 
 int count = 0
-while (count < 5) {
+while count < 5 {
     print(count)
     count += 1
 }
@@ -104,20 +108,21 @@ Variables and functions work like in any other language, and classes take an ins
 # Features
 
 ## Data Types
-| Zen         | Python    | C              |
-| ----------- | --------- | -------------- |
-| int         | int       | long long      |
-| float       | float     | double double  |
-| complex     | complex   | double complex |
-| string      | str       | char[]         |
-| array       | list      | malloc         |
-| lockedarray | tuple     | N/A            |
-| map         | dict      | N/A            |
-| lockedmap   | N/A       | N/A            |
-| set         | set       | N/A            |
-| lockedset   | frozenset | N/A            |
-| bool        | bool      | _Bool          |
-| null        | NoneType  | NULL           |
+| Zen           | Python      | C++                              |
+| ------------- | ----------- | -------------------------------- |
+| `int`         | `int`       | `long long`                      |
+| `float`       | `float`     | `double double`                  |
+| `complex`     | `complex`   | `std::complex<double double>`    |
+| `string`      | `str`       | `std::string`                    |
+| `range`       | `range`     | `for` loop                       |
+| `array`       | `list`      | `std::vector<T>`                 |
+| `lockedarray` | `tuple`     | `std::tuple<T1, T2, ...>`        |
+| `map`         | `dict`      | `std::unordered_map<Key, Value>` |
+| `lockedmap`   | N/A         | N/A                              |
+| `set`         | `set`       | `std::unordered_set<T>`          |
+| `lockedset`   | `frozenset` | `std::set<T>`                    |
+| `bool`        | `bool`      | `bool`                           |
+| `nulltype`    | `NoneType`  | `std::nullptr_t`                 |
 ```
 // int
 int x = 3
@@ -132,13 +137,18 @@ float z = 1.0
 // complex
 complex x = 1i
 complex y = 1 - 3i
-complex z = 0 + 0j
+complex z = 0 + 0i
 
 // string
 string greeting = "hello"
 string char = "a"
 string empty = ""
 greeting[0] // indexing
+
+// range
+for (i) in (range(2, 5)) {
+    print(i)
+}
 
 // array
 array[] of_any = [1, 2.0, "hi"]
@@ -152,15 +162,27 @@ lockedarray locked = (1, 2, 3)
 locked[0] // indexing
 
 // map
-map[] of_any = [1: "one", 2.0: null]
-map[string] string_to_any = ["Abby": 20, "Brian": 23]
-map[int, string] int_to_string = [1: "one", 2: "two"]
+map[] of_any = [
+    1: "one",
+    2.0: null
+]
+map[string] string_to_any = [
+    "Abby": 20,
+    "Brian": 23
+]
+map[int, string] int_to_string = [
+    1: "one",
+    2: "two"
+]
 map[] empty = map()
-of_any[2.0]       // indexing
+of_any[2.0]     // indexing
 of_any[3] = 3.0 // setting
 
 // lockedmap
-lockedmap[] of_any = [1: "one", 2.0: null]
+lockedmap[] of_any = [
+    1: "one",
+    2.0: null
+]
 of_any[2.0] // indexing
 
 // set
@@ -184,40 +206,42 @@ nulltype none = null
 
 ## Errors
 Some of the builtin error types include:
-* Error
+* `Error`
   * Base error class
-* FailedAssertionError
+* `FailedAssertionError`
   * When `assert` is given `false`
-* MissingImportError
+* `MissingImportError`
   * When an imported item cannot be found
-* MissingModuleError
+* `MissingModuleError`
   * When an imported module cannot be found
-* MissingIndexError
+* `MissingIndexError`
   * When an indexable object is indexed at an invalid location
-* UserExit
+* `UserExit`
   * When the user exits the program via keyboard escape code
-* UndefinedNameError
+* `UndefinedNameError`
   * When an undefined name is referenced
-* OSFailureError
+* `OSFailureError`
   * When a system process runs into an error
-* OverflowError
+* `OverflowError`
   * When a math calculation returns a number too large to represent
-* MaxRecursionDepthError
+* `MaxRecursionDepthError`
   * When the maximum recursion depth is reached
-* SyntaxError
+* `SyntaxError`
   * When a syntax mistake is made
-* Exit
+* `Exit`
   * Used to stop the interpreter
-* InvalidTypeError
+* `InvalidTypeError`
   * When an invalid type is used with a function or operation
-* InvalidValueError
+* `InvalidValueError`
   * When an invalid value is passed to a function or operation
 
 ```
 // syntax for error handling:
-protect {
-    raise SomeError("uh oh")
-} handle SomeError, OtherError {
+watch {
+    error SomeError("uh oh")
+} handle (SomeError, OtherError) {
     print("An error occurred!")
+} finally {
+    print("reached the end")
 }
 ```

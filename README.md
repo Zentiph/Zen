@@ -1,5 +1,5 @@
 # The Zen Programming Language
-This programming language has been built from scratch primarily as a learning project by a solo developer. Zen is a static-typed interpreted language. (WHAT???)
+This programming language has been built from scratch primarily as a learning project by a solo developer. Zen is a static-typed interpreted language.
 
 ## Why
 Because I wanted to learn how programming languages work and I'm an asshole who wanted to name a programming language after himself (shameless self-promo).
@@ -10,6 +10,8 @@ The Zen programming language is primarily inspired by Python and C++ syntax. The
 ## Example
 Here is a demo program performing the FizzBuzz algorithm:
 ```
+// fizzbuzz.zen
+
 fn fizzbuzz(int start, int end) {
     int num = start
     while (num < end) {

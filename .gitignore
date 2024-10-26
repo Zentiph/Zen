@@ -2,3 +2,5 @@ sandbox.zen
 sandbox.py
 sandbox.cpp
 sandbox.exe
+.vscode
+.mypy_cache

@@ -41,35 +41,36 @@
  *        FILEEND is used instead of EOF to avoid
  *        name conflicts with stdio.h.
  */
-typedef enum TokenType {
+typedef enum {
     COMMENT, VARIABLE, OPERATOR, CONSTANT, NEWLINE, FILEEND, INVALID
-};
+} TokenType;
 
 /**
  * @brief A token that contains its type and value.
  */
-typedef struct Token {
-    enum TokenType type;
+typedef struct {
+    TokenType type;
     char value[MAX_TOKEN_LENGTH];
-};
+} Token;
 
 void skip_whitespace(FILE *fp);
-struct Token next_token(FILE *fp);
-void print_token(struct Token token);
+Token next_token(FILE *fp);
+void print_token(Token token);
 
 int main(int argc, char const *argv[]) {
-    if (argc != 2 || argv[0] != "-s") {
-        fprintf(stderr, "Usage: -s <source>\n");
+    if (argc != 2) {
+        fprintf(stderr, "Usage: tokenizer <source>\n");
         return 1;
     }
 
     FILE *fp = fopen(argv[1], "r");
     if (!fp) {
         perror("Unable to open file");
+        fprintf(stderr, "Usage: tokenizer <source>\n");
         return 1;
     }
 
-    struct Token token;
+    Token token;
     while ((token = next_token(fp)).type != FILEEND) {
         print_token(token);
     }
@@ -105,14 +106,14 @@ void skip_whitespace(FILE *fp) {
  * @brief Get the next token in the file.
  *
  * @param fp Filepath
- * @return struct Token - The token found
+ * @return Token - The token found
  */
-struct Token next_token(FILE *fp) {
-    struct Token token;
+Token next_token(FILE *fp) {
+    Token token;
     token.value[0] = '\0'; // Reset value
     char ch = fgetc(fp);
 
-    if (ch == FILEEND) {
+    if (ch == EOF) {
         token.type = FILEEND;
         return token;
     }
@@ -150,14 +151,14 @@ struct Token next_token(FILE *fp) {
     if (isalpha(ch) || ch == '_') {
         token.type = VARIABLE;
         int i = 0;
-        token.value[i++] = ch; // TODO idk why this is here
+        token.value[i++] = ch;
 
         while ((ch = fgetc(fp)) != FILEEND && (isalnum(ch) || ch == '_')) {
             token.value[i++] = ch;
         }
         token.value[i] = '\0';
 
-        ungetc(ch, fp); // TODO idk why this is here
+        if (ch != EOF) ungetc(ch, fp); // ungetc if we're not at EOF
         return token;
     }
 
@@ -165,13 +166,14 @@ struct Token next_token(FILE *fp) {
     if (isdigit(ch)) {
         token.type = CONSTANT;
         int i = 0;
-        token.value[i++] = ch; // TODO idk why this is here
+        token.value[i++] = ch;
 
         while ((ch = fgetc(fp)) != FILEEND && isdigit(ch)) {
             token.value[i++] = ch;
         }
         token.value[i] = '\0';
-        ungetc(ch, fp);
+
+        if (ch != EOF) ungetc(ch, fp); // ungetc if we're not at EOF
         return token;
     }
 
@@ -196,4 +198,23 @@ struct Token next_token(FILE *fp) {
     token.value[0] = ch;
     token.value[1] = '\0';
     return token;
+}
+
+/**
+ * @brief Print a representation of a token.
+ *
+ * @param token Token to print
+ */
+void print_token(Token token) {
+    const char *token_types[] = {
+        "COMMENT",
+        "VARIABLE",
+        "OPERATOR",
+        "CONSTANT",
+        "NEWLINE",
+        "EOF",
+        "INVALID",
+    };
+
+    printf("%s: %s\n", token_types[token.type], token.value);
 }

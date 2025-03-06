@@ -1,0 +1,4 @@
+int x = 1 + 1
+int y = 2 - 3
+int z = x * y
+print(z / 2)

@@ -28,6 +28,8 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
+#include "tokenizer.h"
+
 #include <ctype.h>
 #include <string.h>
 #include <stdbool.h>
@@ -41,67 +43,8 @@
 // TODO: Make a list of operators page or comment and put/link it here
 
 const char BINARY_OPERATORS[] = {'+', '-', '*', '/', '='};
-const char UNARY_OPERATORS[] = {'placeholder'}; // TODO
+const char UNARY_OPERATORS[] = {'p'}; // TODO
 
-/**
- * @brief All token types.
- *        FILEEND is used instead of EOF to avoid
- *        name conflicts with stdio.h.
- */
-typedef enum { // TODO: add all planned operators
-    COMMENT,
-    IDENTIFIER,
-    NUMBER,
-    BINARY_OPERATOR, // see BINARY_OPERATORS
-    UNARY_OPERATOR,  // see UNARY_OPERATORS  (// TODO)
-    SINGLE_QUOTE,    // '                    (// TODO)
-    DOUBLE_QUOTE,    // "                    (// TODO)
-    LT_PAREN,        // (
-    RT_PAREN,        // )
-    LT_BRACKET,      // [
-    RT_BRACKET,      // ]
-    LT_CURLY,        // {
-    RT_CURLY,        // }
-    ARROW,           // ->                   (// TODO)
-    DOUBLE_ARROW,    // =>                   (// TODO)
-    NEWLINE,         // \n or ;
-    FILEEND,         // EOF
-    INVALID,
-} TokenType;
-
-/**
- * @brief A token that contains its type and value.
- */
-typedef struct {
-    TokenType type;
-    char value[MAX_TOKEN_LENGTH];
-} Token;
-
-bool char_in_arr(char val, const char *arr, size_t n);
-void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size_t bufferSize);
-Token next_token(FILE *fp);
-void print_token(Token token);
-
-int main(int argc, char const *argv[]) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: tokenizer <source>\n");
-        return 1;
-    }
-
-    FILE *fp = fopen(argv[1], "r");
-    if (!fp) {
-        perror("Unable to open file");
-        return 1;
-    }
-
-    Token token;
-    while ((token = next_token(fp)).type != FILEEND) {
-        print_token(token);
-    }
-
-    fclose(fp);
-    return 0;
-}
 
 /**
  * @brief Check if a char is in an array
@@ -360,4 +303,25 @@ void print_token(Token token) {
     } else {
         printf("%s: '%s'\n", token_types[token.type], token.value);
     }
+}
+
+int main(int argc, char const *argv[]) {
+    if (argc != 2) {
+        fprintf(stderr, "Usage: tokenizer <source>\n");
+        return 1;
+    }
+
+    FILE *fp = fopen(argv[1], "r");
+    if (!fp) {
+        perror("Unable to open file");
+        return 1;
+    }
+
+    Token token;
+    while ((token = next_token(fp)).type != FILEEND) {
+        print_token(token);
+    }
+
+    fclose(fp);
+    return 0;
 }

@@ -51,7 +51,7 @@ int my_var = 10
 // conditionals
 if 1 == 2 {
     print("what")
-} elseif 1 == -1 {
+} elseif 1 <= -1 {
     print("seriously?")
 } else {
     print("made it")
@@ -322,11 +322,49 @@ Some of the builtin error types include:
 ```
 // syntax for error handling/throwing:
 try {
-    error SomeError("uh oh")
+    throw SomeError("uh oh")
 } catch (SomeError, OtherError) {
     print("An error occurred!")
-    throw new Error("lol")
 } finally {
     print("reached the end")
 }
 ```
+
+## Operators
+Here's a list of all operators in Zen (including planned):
+| Operator | Type       | Functionality                                       | Example     |
+| -------- | ---------- | --------------------------------------------------- | ----------- |
+| `=`      | Binary     | Assignment                                          | `int x = 3` |
+| `+`      | Binary     | Add two objects                                     | `x + y`     |
+| `-`      | Binary     | Subtract two objects                                | `x - y`     |
+| `*`      | Binary     | Multiply two objects                                | `x * y`     |
+| `/`      | Binary     | Divide two objects                                  | `x / y`     |
+| `%`      | Binary     | Modulus of two objects                              | `x % y`     |
+| `+=`     | Binary     | Add two objects in-place                            | `x += y`    |
+| `-=`     | Binary     | Subtract two objects in-place                       | `x -= y`    |
+| `*=`     | Binary     | Multiply two objects in-place                       | `x *= y`    |
+| `/=`     | Binary     | Divide two objects in-place                         | `x /= y`    |
+| `%=`     | Binary     | Modulus two objects in-place                        | `x %= 2`    |
+| `==`     | Comparison | Check if two objects are equal                      | `x == y`    |
+| `!=`     | Comparison | Check if two objects are not equal                  | `x != y`    |
+| `>`      | Comparison | Check an object is greater than another             | `x > y`     |
+| `<`      | Comparison | Check an object is less than another                | `x < y`     |
+| `>=`     | Comparison | Check an object is greater than or equal to another | `x >= y`    |
+| `<=`     | Comparison | Check an object is less than or equal to another    | `x <= y`    |
+| `and`    | Logic      | Check if two expressions are true                   | `x and y`   |
+| `&&`     | Logic      | Check if two expressions are true                   | `x && y`    |
+| `or`     | Logic      | Check if one of two expressions are true            | `x or y`    |
+| `\|\|`   | Logic      | Check if one of two expressions are true            | `x \|\| y`  |
+| `not`    | Logic      | Reverse an expression's truthiness                  | `not x`     |
+| `!`      | Logic      | Reverse an expression's truthiness                  | `!x`        |
+| `&`      | Bitwise    | Bitwise AND                                         | `x & y`     |
+| `\|`     | Bitwise    | Bitwise OR                                          | `x \| y`    |
+| `^`      | Bitwise    | Bitwise XOR                                         | `x ^ y`     |
+| `~`      | Bitwise    | Bit inversion                                       | `~x`        |
+| `<<`     | Bitwise    | Zero-fill left shift                                | `x << 2`    |
+| `>>`     | Bitwise    | Signed right shift                                  | `x >> 2`    |
+| `&=`     | Bitwise    | In-place bitwise AND                                | `x &= y`    |
+| `\|=`    | Bitwise    | In-place bitwise OR                                 | `x \|= y`   |
+| `^=`     | Bitwise    | In-place bitwise XOR                                | `x ^= y`    |
+| `<<=`    | Bitwise    | In-place zero-fill left shift                       | `x <<= 2`   |
+| `>>=`    | Bitwise    | In-place signed right shift                         | `x >>= 2`   |

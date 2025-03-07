@@ -38,27 +38,35 @@
 #define NEWLINE_CHAR '\n'
 #define BUFFER_SIZE 1024
 
+// TODO: Make a list of operators page or comment and put/link it here
+
 const char BINARY_OPERATORS[] = {'+', '-', '*', '/', '='};
+const char UNARY_OPERATORS[] = {'placeholder'}; // TODO
 
 /**
  * @brief All token types.
  *        FILEEND is used instead of EOF to avoid
  *        name conflicts with stdio.h.
  */
-typedef enum {
+typedef enum { // TODO: add all planned operators
     COMMENT,
     IDENTIFIER,
-    CONSTANT,
-    BIN_OPERATOR,
-    LT_PAREN,   // '('
-    RT_PAREN,   // ')'
-    LT_BRACKET, // '['
-    RT_BRACKET, // ']'
-    LT_CURLY,   // '{'
-    RT_CURLY,   // '}'
-    NEWLINE,    // '\n' or ';'
-    FILEEND,    // EOF
-    INVALID
+    NUMBER,
+    BINARY_OPERATOR, // see BINARY_OPERATORS
+    UNARY_OPERATOR,  // see UNARY_OPERATORS  (// TODO)
+    SINGLE_QUOTE,    // '                    (// TODO)
+    DOUBLE_QUOTE,    // "                    (// TODO)
+    LT_PAREN,        // (
+    RT_PAREN,        // )
+    LT_BRACKET,      // [
+    RT_BRACKET,      // ]
+    LT_CURLY,        // {
+    RT_CURLY,        // }
+    ARROW,           // ->                   (// TODO)
+    DOUBLE_ARROW,    // =>                   (// TODO)
+    NEWLINE,         // \n or ;
+    FILEEND,         // EOF
+    INVALID,
 } TokenType;
 
 /**
@@ -239,9 +247,9 @@ Token next_token(FILE *fp) {
         return token;
     }
 
-    // Handle numbers (constants)
+    // Handle numbers
     if (isdigit(ch)) {
-        token.type = CONSTANT;
+        token.type = NUMBER;
         int i = 0;
         token.value[i++] = ch;
 
@@ -255,11 +263,14 @@ Token next_token(FILE *fp) {
 
     // Handle binary operators
     if (char_in_arr(ch, BINARY_OPERATORS, sizeof BINARY_OPERATORS)) {
-        token.type = BIN_OPERATOR;
+        token.type = BINARY_OPERATOR;
         token.value[0] = ch;
         token.value[1] = '\0';
         return token;
     }
+
+    // Handle unary operators
+    // TODO
 
     // Handle parenthesis, brackets, and curly braces
     if (ch == '(') {
@@ -322,22 +333,28 @@ Token next_token(FILE *fp) {
 void print_token(Token token) {
     const char *token_types[] = {
         // Make these equal length for readability
-        "COMMENT      ",
-        "IDENTIFIER   ",
-        "CONSTANT     ",
-        "BIN_OPERATOR ",
-        "LT_PAREN     ",
-        "RT_PAREN     ",
-        "LT_BRACKET   ",
-        "RT_BRACKET   ",
-        "LT_CURLY     ",
-        "RT_CURLY     ",
-        "NEWLINE      ",
-        "FILEEND      ",
-        "INVALID      ",
+        "COMMENT         ",
+        "IDENTIFIER      ",
+        "NUMBER          ",
+        "BINARY_OPERATOR ",
+        "UNARY_OPERATOR  ",
+        "SINGLE_QUOTE    ",
+        "DOUBLE_QUOTE    ",
+        "LT_PAREN        ",
+        "RT_PAREN        ",
+        "LT_BRACKET      ",
+        "RT_BRACKET      ",
+        "LT_CURLY        ",
+        "RT_CURLY        ",
+        "ARROW           ",
+        "DOUBLE_ARROW    ",
+        "NEWLINE         ",
+        "EOF             ",
+        "INVALID         ",
     };
 
-    // Newline representation = "\\n"
+    // Newline representation is "\\n"
+    // (to prevent gaps in output)
     if (token.value[0] == '\n') {
         printf("%s: '%s'\n", token_types[token.type], "\\n");
     } else {

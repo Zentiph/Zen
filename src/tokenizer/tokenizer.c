@@ -305,7 +305,7 @@ void print_token(Token token) {
     }
 }
 
-int main(int argc, char const *argv[]) {
+int main(int argc, char const *argv[]) {;
     if (argc != 2) {
         fprintf(stderr, "Usage: tokenizer <source>\n");
         return 1;

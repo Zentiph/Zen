@@ -31,6 +31,9 @@
 #ifndef TOKENIZER_H
 #define TOKENIZER_H
 
+#include <stdio.h>
+#include <stdlib.h>
+
 #define MAX_TOKEN_LENGTH 100
 #define NEWLINE_CHAR '\n'
 #define BUFFER_SIZE 1024

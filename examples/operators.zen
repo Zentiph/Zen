@@ -1,0 +1,29 @@
+// Assignment
+int x = 0
+
+// Binary
+x = x + 1
+x = x - 3
+x = x * 10
+x = x / 5
+x = x % 2
+
+// In-place binary
+x += 2
+x -= 3
+x *= 6
+x /= 3
+x %= 3
+
+// Comparison
+x == 0
+x != 10
+x > -1
+x < 1
+x >= 0
+x <= 0
+
+// Logical
+types.parse_bool(x) and true
+types.parse_bool(x) or false
+not types.parse_bool(x)

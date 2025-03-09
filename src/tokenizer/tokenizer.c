@@ -40,25 +40,43 @@
 #define NEWLINE_CHAR '\n'
 #define BUFFER_SIZE 1024
 
-// TODO: Make a list of operators page or comment and put/link it here
+const char BINARY_OPERATORS[] = {'+', '-', '*', '/', '%', '='};
+const char *IN_PLACE_BINARY_OPERATORS[] = {"+=", "-=", "*=", "/=", "%="};
+const char *COMPARISON_OPERATORS[] = {"==", "!=", ">", "<", ">=", "<="};
+const char *LOGIC_OPERATORS[] = {"and", "or", "not"};
 
-const char BINARY_OPERATORS[] = {'+', '-', '*', '/', '='};
-const char UNARY_OPERATORS[] = {'p'}; // TODO
-
+void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size_t bufferSize);
+Token next_token(FILE *fp);
+void print_token(Token token);
 
 /**
- * @brief Check if a char is in an array
+ * @brief Check if a char is in a char array.
  *
  * @param ch       Char
  * @param arr      Array
- * @param n        Size of arr
+ * @param size     Size of arr
  * @return true  - If ch is in arr
  * @return false - If ch is not in arr
  */
-bool char_in_arr(char ch, const char *arr, size_t n) {
-    for (size_t i = 0; i < n; i++) {
-        if (arr[i] == ch)
-            return true;
+bool char_in_arr(char ch, const char *arr, int size) {
+    for (int i = 0; i < size; i++) {
+        if (arr[i] == ch) return true;
+    }
+    return false;
+}
+
+/**
+ * @brief Check if a string is in a string array.
+ *
+ * @param str      String
+ * @param arr      Array
+ * @param size     Size of arr
+ * @return true  - If str is in arr
+ * @return false - If str is not in arr
+ */
+bool string_in_arr(const char *str, const char *arr[], int size) {
+    for (int i = 0; i < size; i++) {
+        if (strcmp(str, arr[i]) == 0) return true;
     }
     return false;
 }
@@ -175,10 +193,9 @@ Token next_token(FILE *fp) {
         return token;
     }
 
-    // Handle variable declaration
+    // Handle identifiers
     // (First character of an identifier cannot be a digit)
     if (isalpha(ch) || ch == '_') {
-        token.type = TOKEN_IDENTIFIER;
         int i = 0;
         token.value[i++] = ch;
 
@@ -187,6 +204,27 @@ Token next_token(FILE *fp) {
             if (i >= MAX_TOKEN_LENGTH - 1) break;
         }
         token.value[i] = '\0';
+
+        // Ok, there's probably a better way of doing this,
+        // however it is 4am and i want to die and i can't
+        // be bothered to change this so suck it up and cry about it
+        if ((      token.value[0] == 'a'
+                && token.value[1] == 'n'
+                && token.value[2] == 'd'
+                && token.value[3] == '\0')
+               || (token.value[0] == 'o'
+                && token.value[1] == 'r'
+                && token.value[2] == '\0')
+               || (token.value[0] == 'n'
+                && token.value[1] == 'o'
+                && token.value[2] == 't'
+                && token.value[3] == '\0'))
+        {
+            token.type = TOKEN_LOGIC_OP;
+        } else {
+            token.type = TOKEN_IDENTIFIER;
+        }
+
         return token;
     }
 
@@ -204,6 +242,42 @@ Token next_token(FILE *fp) {
         return token;
     }
 
+    // Handle comparison operators
+    if (ch == '=' || ch == '!' || ch == '<' || ch == '>') {
+        char next = *ptr++;
+        // '==' or '!=' or '<=' or '>='
+        if (next == '=') {
+            token.type = TOKEN_COMPARISON_OP;
+            token.value[0] = ch;
+            token.value[1] = next;
+            token.value[2] = '\0';
+            return token;
+        }
+
+        // If we didn't need the next char,
+        // decrement the ptr
+        *ptr--;
+        // '<' or '>'
+        if (ch == '<' || ch == '>') {
+            token.type = TOKEN_COMPARISON_OP;
+            token.value[0] = ch;
+            token.value[1] = '\0';
+            return token;
+        }
+        // Continue on if the cases didn't work
+        // (like '=')
+    }
+
+    // Handle in-place binary operators
+    // (all in-place binary operators are string of length 2)
+    if (ch != '=' && char_in_arr(ch, BINARY_OPERATORS, sizeof BINARY_OPERATORS)) {
+        token.type = TOKEN_IP_BINARY_OP;
+        token.value[0] = ch;
+        token.value[1] = *ptr++;
+        token.value[2] = '\0';
+        return token;
+    }
+
     // Handle binary operators
     if (char_in_arr(ch, BINARY_OPERATORS, sizeof BINARY_OPERATORS)) {
         token.type = TOKEN_BINARY_OP;
@@ -211,9 +285,6 @@ Token next_token(FILE *fp) {
         token.value[1] = '\0';
         return token;
     }
-
-    // Handle unary operators
-    // TODO
 
     // Handle parenthesis, brackets, and curly braces
     if (ch == '(') {
@@ -279,24 +350,27 @@ void print_token(Token token) {
         // types in TokenType from tokenizer.h
 
         // Make these have equal length for readability
-        "COMMENT         ",
-        "IDENTIFIER      ",
-        "NUMBER          ",
-        "BINARY_OPERATOR ",
-        "UNARY_OPERATOR  ",
-        "SINGLE_QUOTE    ",
-        "DOUBLE_QUOTE    ",
-        "LT_PAREN        ",
-        "RT_PAREN        ",
-        "LT_BRACKET      ",
-        "RT_BRACKET      ",
-        "LT_CURLY        ",
-        "RT_CURLY        ",
-        "ARROW           ",
-        "DOUBLE_ARROW    ",
-        "NEWLINE         ",
-        "EOF             ",
-        "INVALID         ",
+        "TOKEN_COMMENT       ",
+        "TOKEN_IDENTIFIER    ",
+        "TOKEN_NUMBER        ",
+        "TOKEN_BINARY_OP     ",
+        "TOKEN_IP_BINARY_OP  ",
+        "TOKEN_COMPARISON_OP ",
+        "TOKEN_LOGIC_OP      ",
+        "TOKEN_SGL_QTE       ",
+        "TOKEN_DBL_QTE       ",
+        "TOKEN_LT_PAREN      ",
+        "TOKEN_RT_PAREN      ",
+        "TOKEN_LT_BRACK      ",
+        "TOKEN_RT_BRACK      ",
+        "TOKEN_LT_CURLY      ",
+        "TOKEN_RT_CURLY      ",
+        "TOKEN_DOT           ",
+        "TOKEN_ARROW         ",
+        "TOKEN_DBL_ARROW     ",
+        "TOKEN_NEWLINE       ",
+        "TOKEN_EOF           ",
+        "TOKEN_INVALID       "
     };
 
     // Newline representation is "\\n"

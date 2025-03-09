@@ -352,19 +352,5 @@ Here's a list of all operators in Zen (including planned):
 | `>=`     | Comparison | Check an object is greater than or equal to another | `x >= y`    |
 | `<=`     | Comparison | Check an object is less than or equal to another    | `x <= y`    |
 | `and`    | Logic      | Check if two expressions are true                   | `x and y`   |
-| `&&`     | Logic      | Check if two expressions are true                   | `x && y`    |
 | `or`     | Logic      | Check if one of two expressions are true            | `x or y`    |
-| `\|\|`   | Logic      | Check if one of two expressions are true            | `x \|\| y`  |
 | `not`    | Logic      | Reverse an expression's truthiness                  | `not x`     |
-| `!`      | Logic      | Reverse an expression's truthiness                  | `!x`        |
-| `&`      | Bitwise    | Bitwise AND                                         | `x & y`     |
-| `\|`     | Bitwise    | Bitwise OR                                          | `x \| y`    |
-| `^`      | Bitwise    | Bitwise XOR                                         | `x ^ y`     |
-| `~`      | Bitwise    | Bit inversion                                       | `~x`        |
-| `<<`     | Bitwise    | Zero-fill left shift                                | `x << 2`    |
-| `>>`     | Bitwise    | Signed right shift                                  | `x >> 2`    |
-| `&=`     | Bitwise    | In-place bitwise AND                                | `x &= y`    |
-| `\|=`    | Bitwise    | In-place bitwise OR                                 | `x \|= y`   |
-| `^=`     | Bitwise    | In-place bitwise XOR                                | `x ^= y`    |
-| `<<=`    | Bitwise    | In-place zero-fill left shift                       | `x <<= 2`   |
-| `>>=`    | Bitwise    | In-place signed right shift                         | `x >>= 2`   |

@@ -1,0 +1,76 @@
+(* EBNF for the Zen programming language *)
+
+program         = { statement } ;
+
+statement       = var_decl
+                | assignment
+                | if_stmt
+                | while_stmt
+                | for_stmt
+                | func_decl
+                | class_decl
+                | expression_stmt
+                | comment ;
+
+(* Variable declaration and assignment *)
+(* A variable declaration can have an assignment or not *)
+var_decl        = type , identifier , ["=" , expression] ;
+assignment      = identifier , assignment_op , expression ;
+assignment_op   = "=" | "+=" | "-=" | "*=" | "/=" | "%=" ;
+
+(* Control flow *)
+if_stmt         = "if" , expression , block { "elseif" , expression , block } [ "else" , block ] ;
+while_stmt      = "while" , expression , block ;
+for_stmt        = "for" , type , identifier , "in" , expression , block ;
+
+(* Functions *)
+func_decl       = "fn" , identifier , "(" , [ param_list ] , ")" , [ "->" , type ] , block ;
+param_list      = { param , { "," , param} } { "," default_param } ;
+param           = type , identifier [ "=" expression ] ;
+default_param   = param , "=" , expression ;
+
+(* Classes *)
+class_decl      = "class" , identifier , [ "<" , type , ">" ] , block ;
+
+(* Blocks and statements *)
+block           = "{" , { statement } , "}"
+expression_stmt = expression , end_of_line ;
+end_of_line     = "\n" | ";"
+
+(* Expressions (using standard operator precedence) *)
+expression      = logical_expr ;
+logical_expr    = relational_expr ,
+                  { ( "and" | "or" | "&&" | "||" ) , relational_expr } ;
+relational_expr = additive_expr ,
+                  { ( ">" | "<" | ">=" | "<=" | "==" | "!=" ) , additive_expr }
+additive_expr   = multiplicative_expr ,
+                  { ( "+" | "-" ) , multiplicative_expr } ;
+multiplicative_expr = unary_expr ,
+                  { ( "*" | "/" | "%" ) , unary_expr } ;
+unary_expr      = [ ( "not" | "!" | "-" ) ] , primary_expr ;
+primary_expr    = number | identifier | string_literal | "(" , expression , ")" ;
+
+(* Types *)
+type            = identifier , [ "<" , type_list , ">" ] ;
+type_list       = type , { "," , type } ;
+
+(* Lexical rules *)
+identifier      = letter | "_" ,
+                  { letter | digit | "_" } ;
+number          = digit , { digit } , [ "." , digit , { digit } ] ;
+string_literal  = "\"" , { character } "\"" | "'" , { character } "'" ;
+
+comment         = single_line_comment | multi_line_comment ;
+single_line_comment = "//" , { any_character - newline } , newline ;
+double_line_comment = "/." , { any_character } , "./" ;
+
+letter          = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" |
+                  "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" |
+                  "U" | "V" | "W" | "X" | "Y" | "Z" |
+                  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" |
+                  "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" |
+                  "u" | "v" | "w" | "x" | "y" | "z" ;
+digit           = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+character       = ? any valid character ?
+any_character   = ? any valid character ?
+newline         = "\n"

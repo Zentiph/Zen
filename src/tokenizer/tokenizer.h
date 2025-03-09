@@ -44,24 +44,24 @@
  *        name conflicts with stdio.h.
  */
 typedef enum {
-    COMMENT,
-    IDENTIFIER,
-    NUMBER,
-    BINARY_OPERATOR,
-    UNARY_OPERATOR,
-    SINGLE_QUOTE,
-    DOUBLE_QUOTE,
-    LT_PAREN,
-    RT_PAREN,
-    LT_BRACKET,
-    RT_BRACKET,
-    LT_CURLY,
-    RT_CURLY,
-    ARROW,
-    DOUBLE_ARROW,
-    NEWLINE,
-    FILEEND,
-    INVALID,
+    TOKEN_COMMENT,
+    TOKEN_IDENTIFIER,
+    TOKEN_NUMBER,
+    TOKEN_BINARY_OP,
+    TOKEN_UNARY_OP,
+    TOKEN_SGL_QTE,
+    TOKEN_DBL_QTE,
+    TOKEN_LT_PAREN,
+    TOKEN_RT_PAREN,
+    TOKEN_LT_BRACK,
+    TOKEN_RT_BRACK,
+    TOKEN_LT_CURLY,
+    TOKEN_RT_CURLY,
+    TOKEN_ARROW,
+    TOKEN_DBL_ARROW,
+    TOKEN_NEWLINE,
+    TOKEN_EOF,
+    TOKEN_INVALID
 } TokenType;
 
 /**

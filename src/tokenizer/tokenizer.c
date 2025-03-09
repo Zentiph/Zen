@@ -119,7 +119,7 @@ Token next_token(FILE *fp) {
         bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
         ptr = buffer;
         if (bytesRead == 0) {
-            token.type = FILEEND;
+            token.type = TOKEN_EOF;
             return token;
         }
     }
@@ -131,7 +131,7 @@ Token next_token(FILE *fp) {
         bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
         ptr = buffer;
         if (bytesRead == 0) {
-            token.type = FILEEND;
+            token.type = TOKEN_EOF;
             return token;
         }
     }
@@ -141,7 +141,7 @@ Token next_token(FILE *fp) {
 
     // Handle single-line comments
     if (ch == '/' && ptr < buffer + bytesRead && *ptr == '/') {
-        token.type = COMMENT;
+        token.type = TOKEN_COMMENT;
         int i = 0;
         // Skip the second '/'
         ptr++;
@@ -157,7 +157,7 @@ Token next_token(FILE *fp) {
 
     // Handle multi-line comments (/. ... ./)
     if (ch == '/' && ptr < buffer + bytesRead && *ptr == '.') {
-        token.type = COMMENT;
+        token.type = TOKEN_COMMENT;
         int i = 0;
         // Skip the '.'
         ptr++;
@@ -178,7 +178,7 @@ Token next_token(FILE *fp) {
     // Handle variable declaration
     // (First character of an identifier cannot be a digit)
     if (isalpha(ch) || ch == '_') {
-        token.type = IDENTIFIER;
+        token.type = TOKEN_IDENTIFIER;
         int i = 0;
         token.value[i++] = ch;
 
@@ -192,7 +192,7 @@ Token next_token(FILE *fp) {
 
     // Handle numbers
     if (isdigit(ch)) {
-        token.type = NUMBER;
+        token.type = TOKEN_NUMBER;
         int i = 0;
         token.value[i++] = ch;
 
@@ -206,7 +206,7 @@ Token next_token(FILE *fp) {
 
     // Handle binary operators
     if (char_in_arr(ch, BINARY_OPERATORS, sizeof BINARY_OPERATORS)) {
-        token.type = BINARY_OPERATOR;
+        token.type = TOKEN_BINARY_OP;
         token.value[0] = ch;
         token.value[1] = '\0';
         return token;
@@ -217,37 +217,37 @@ Token next_token(FILE *fp) {
 
     // Handle parenthesis, brackets, and curly braces
     if (ch == '(') {
-        token.type = LT_PAREN;
+        token.type = TOKEN_LT_PAREN;
         token.value[0] = ch;
         token.value[1] = '\0';
         return token;
     }
     if (ch == ')') {
-        token.type = RT_PAREN;
+        token.type = TOKEN_RT_PAREN;
         token.value[0] = ch;
         token.value[1] = '\0';
         return token;
     }
     if (ch == '[') {
-        token.type = LT_BRACKET;
+        token.type = TOKEN_LT_BRACK;
         token.value[0] = ch;
         token.value[1] = '\0';
         return token;
     }
     if (ch == ']') {
-        token.type = RT_BRACKET;
+        token.type = TOKEN_RT_BRACK;
         token.value[0] = ch;
         token.value[1] = '\0';
         return token;
     }
     if (ch == '{') {
-        token.type = LT_CURLY;
+        token.type = TOKEN_LT_CURLY;
         token.value[0] = ch;
         token.value[1] = '\0';
         return token;
     }
     if (ch == '}') {
-        token.type = RT_CURLY;
+        token.type = TOKEN_RT_CURLY;
         token.value[0] = ch;
         token.value[1] = '\0';
         return token;
@@ -255,14 +255,14 @@ Token next_token(FILE *fp) {
 
     // Handle new code lines
     if (ch == '\n' || ch == ';') {
-        token.type = NEWLINE;
+        token.type = TOKEN_NEWLINE;
         token.value[0] = ch;
         token.value[1] = '\0';
         return token;
     }
 
     // If none of the above, the token is invalid
-    token.type = INVALID;
+    token.type = TOKEN_INVALID;
     token.value[0] = ch;
     token.value[1] = '\0';
     return token;
@@ -275,7 +275,10 @@ Token next_token(FILE *fp) {
  */
 void print_token(Token token) {
     const char *token_types[] = {
-        // Make these equal length for readability
+        // Make sure these align with the defined token
+        // types in TokenType from tokenizer.h
+
+        // Make these have equal length for readability
         "COMMENT         ",
         "IDENTIFIER      ",
         "NUMBER          ",
@@ -318,7 +321,7 @@ int main(int argc, char const *argv[]) {;
     }
 
     Token token;
-    while ((token = next_token(fp)).type != FILEEND) {
+    while ((token = next_token(fp)).type != TOKEN_EOF) {
         print_token(token);
     }
 

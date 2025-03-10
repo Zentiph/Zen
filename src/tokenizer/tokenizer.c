@@ -433,6 +433,14 @@ int main(int argc, char const *argv[]) {;
         return 1;
     }
 
+    // Check if the file is a .zen file
+    size_t fileLen = strlen(argv[1]);
+    int suffixLen = 4; // ".zen"
+    if (suffixLen > fileLen || strcmp(argv[1] + fileLen - suffixLen, ".zen") != 0) {
+        fprintf(stderr, "tokenizer source input must be a .zen file");
+        return 1;
+    }
+
     FILE *fp = fopen(argv[1], "r");
     if (!fp) {
         perror("Unable to open file");

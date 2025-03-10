@@ -30,7 +30,7 @@ param           = type , identifier [ "=" expression ] ;
 default_param   = param , "=" , expression ;
 
 (* Classes *)
-class_decl      = "class" , identifier , [ "<" , type , ">" ] , block ;
+class_decl      = "class" , identifier , [ "[" , type , "]" ] , [ "extends" , identifier , {"," , identifier } ] , block ;
 
 (* Blocks and statements *)
 block           = "{" , { statement } , "}"

@@ -34,7 +34,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAX_TOKEN_LENGTH 100
+#define MAX_TOKEN_LENGTH 128
 #define NEWLINE_CHAR '\n'
 #define BUFFER_SIZE 1024
 
@@ -51,17 +51,16 @@ typedef enum {
     TOKEN_IP_BINARY_OP,
     TOKEN_COMPARISON_OP,
     TOKEN_LOGIC_OP,
-    TOKEN_SGL_QTE,   // TODO
-    TOKEN_DBL_QTE,   // TODO
+    TOKEN_STRING,
     TOKEN_LT_PAREN,
     TOKEN_RT_PAREN,
     TOKEN_LT_BRACK,
     TOKEN_RT_BRACK,
     TOKEN_LT_CURLY,
     TOKEN_RT_CURLY,
-    TOKEN_DOT,       // TODO
-    TOKEN_ARROW,     // TODO
-    TOKEN_DBL_ARROW, // TODO
+    TOKEN_DOT,
+    TOKEN_ARROW,
+    TOKEN_DBL_ARROW,
     TOKEN_NEWLINE,
     TOKEN_EOF,
     TOKEN_INVALID

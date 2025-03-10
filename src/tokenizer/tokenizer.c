@@ -36,10 +36,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAX_TOKEN_LENGTH 100
-#define NEWLINE_CHAR '\n'
-#define BUFFER_SIZE 1024
-
 const char BINARY_OPERATORS[] = {'+', '-', '*', '/', '%', '='};
 const char *IN_PLACE_BINARY_OPERATORS[] = {"+=", "-=", "*=", "/=", "%="};
 const char *COMPARISON_OPERATORS[] = {"==", "!=", ">", "<", ">=", "<="};
@@ -173,6 +169,8 @@ Token next_token(FILE *fp) {
         return token;
     }
 
+    // TODO FIX MULTILINE COMMENT NOT WORKING
+
     // Handle multi-line comments (/. ... ./)
     if (ch == '/' && ptr < buffer + bytesRead && *ptr == '.') {
         token.type = TOKEN_COMMENT;
@@ -182,13 +180,30 @@ Token next_token(FILE *fp) {
 
         while (ptr < buffer + bytesRead) {
             // End of comment
-            if (*ptr == '.' && (ptr + 1 < buffer + bytesRead && *(ptr + 1)) == '/') {
+            if (*ptr == '.' && (ptr + 1 < buffer + bytesRead && *(ptr + 1) == '/')) {
                 ptr += 2; // Skip the closing "./"
                 break;
             }
             token.value[i++] = *ptr++;
             if (i >= MAX_TOKEN_LENGTH - 1) break;
         }
+        token.value[i] = '\0';
+        return token;
+    }
+
+    // Handle strings
+    if (ch == '"' || ch == '\'') {
+        char quote = ch; // Keep quote type consistent
+        token.type = TOKEN_STRING;
+        int i = 0;
+        token.value[i++] = ch;
+
+        // TODO add support for "\'" and "\""
+        while (ptr < buffer + bytesRead && (*ptr != quote)) {
+            token.value[i++] = *ptr++;
+            if (i >= MAX_TOKEN_LENGTH - 1) break;
+        }
+        token.value[i++] = *ptr++; // Add finishing quote
         token.value[i] = '\0';
         return token;
     }
@@ -205,9 +220,7 @@ Token next_token(FILE *fp) {
         }
         token.value[i] = '\0';
 
-        // Ok, there's probably a better way of doing this,
-        // however it is 4am and i want to die and i can't
-        // be bothered to change this so suck it up and cry about it
+        // stupid
         if ((      token.value[0] == 'a'
                 && token.value[1] == 'n'
                 && token.value[2] == 'd'
@@ -240,6 +253,32 @@ Token next_token(FILE *fp) {
         }
         token.value[i] = '\0';
         return token;
+    }
+
+    // Handle arrows
+    if (ch == '-') {
+        char next = *ptr++;
+        if (next == '>') {
+            token.type = TOKEN_ARROW;
+            token.value[0] = ch;
+            token.value[1] = next;
+            token.value[2] = '\0';
+            return token;
+        }
+        // If we didn't need the next char, decrement ptr
+        *ptr--;
+    }
+    if (ch == '=') {
+        char next = *ptr++;
+        if (next == '>') {
+            token.type = TOKEN_DBL_ARROW;
+            token.value[0] = ch;
+            token.value[1] = next;
+            token.value[2] = '\0';
+            return token;
+        }
+        // If we didn't need the next char, decrement ptr
+        *ptr--;
     }
 
     // Handle comparison operators
@@ -286,7 +325,14 @@ Token next_token(FILE *fp) {
         return token;
     }
 
-    // Handle parenthesis, brackets, and curly braces
+    // Handle single characters
+    if (ch == '.') {
+        token.type = TOKEN_DOT;
+        token.value[0] = ch;
+        token.value[1] = '\0';
+        return token;
+    }
+
     if (ch == '(') {
         token.type = TOKEN_LT_PAREN;
         token.value[0] = ch;
@@ -357,8 +403,7 @@ void print_token(Token token) {
         "TOKEN_IP_BINARY_OP  ",
         "TOKEN_COMPARISON_OP ",
         "TOKEN_LOGIC_OP      ",
-        "TOKEN_SGL_QTE       ",
-        "TOKEN_DBL_QTE       ",
+        "TOKEN_STRING        ",
         "TOKEN_LT_PAREN      ",
         "TOKEN_RT_PAREN      ",
         "TOKEN_LT_BRACK      ",
@@ -398,6 +443,7 @@ int main(int argc, char const *argv[]) {;
     while ((token = next_token(fp)).type != TOKEN_EOF) {
         print_token(token);
     }
+    print_token(token); // Print EOF
 
     fclose(fp);
     return 0;

@@ -1,0 +1,43 @@
+// Single line comment
+
+/..
+ . multi
+ . line
+ . comment
+ ./
+
+// Identifier, binary op, and number
+int x = 1
+
+// In place binary op
+x += 2
+
+// Comparison op, logical op, and curly braces
+if x > 1 and x < 4 {
+    // Parenthesis and string
+    print("in between 1 and 4")
+    print('wow')
+}
+
+// Brackets
+array[int] arr
+
+// Dot
+import math
+float y = math.sqrt(x)
+
+// Arrow
+fn add(int x, int y) -> int {
+    return x + y
+}
+
+// Double arrow
+(int => int) func = (int x => x * x)
+
+// Newline (semicolon)
+x += 4; y += 2
+
+// Invalid
+?
+
+// EOF

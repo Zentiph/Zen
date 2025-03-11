@@ -169,8 +169,6 @@ Token next_token(FILE *fp) {
         return token;
     }
 
-    // TODO FIX MULTILINE COMMENT NOT WORKING
-
     // Handle multi-line comments (/. ... ./)
     if (ch == '/' && ptr < buffer + bytesRead && *ptr == '.') {
         token.type = TOKEN_COMMENT;
@@ -191,19 +189,28 @@ Token next_token(FILE *fp) {
         return token;
     }
 
-    // Handle strings
+    // Handle strings (outer quotes not included)
     if (ch == '"' || ch == '\'') {
         char quote = ch; // Keep quote type consistent
         token.type = TOKEN_STRING;
         int i = 0;
-        token.value[i++] = ch;
 
-        // TODO add support for "\'" and "\""
-        while (ptr < buffer + bytesRead && (*ptr != quote)) {
-            token.value[i++] = *ptr++;
-            if (i >= MAX_TOKEN_LENGTH - 1) break;
+        while (ptr < buffer + bytesRead) { // && (*ptr != quote)) {
+            // Check for escape coded quotes
+            if (*ptr == '\\') {
+                // Increment twice to skip a "\'" or "\""
+                token.value[i++] = *ptr++;
+                if (i >= MAX_TOKEN_LENGTH - 1) break;
+                token.value[i++] = *ptr++;
+                if (i >= MAX_TOKEN_LENGTH - 1) break;
+
+            } else if (*ptr != quote) {
+                token.value[i++] = *ptr++;
+                if (i >= MAX_TOKEN_LENGTH - 1) break;
+
+            } else break; // Break if we hit the end of the string
         }
-        token.value[i++] = *ptr++; // Add finishing quote
+        ptr++; // Move past final quote
         token.value[i] = '\0';
         return token;
     }

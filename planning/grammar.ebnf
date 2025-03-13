@@ -19,7 +19,7 @@ assignment      = identifier , assignment_op , expression ;
 assignment_op   = "=" | "+=" | "-=" | "*=" | "/=" | "%=" ;
 
 (* Control flow *)
-if_stmt         = "if" , expression , block { "elseif" , expression , block } [ "else" , block ] ;
+if_stmt         = "if" , expression , block , { "else" , block } ;
 while_stmt      = "while" , expression , block ;
 for_stmt        = "for" , type , identifier , "in" , expression , block ;
 

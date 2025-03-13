@@ -7,7 +7,7 @@
  *
  * Permission is hereby granted, free of charge,
  * to any person obtaining a copy of this software
- * and associated documentation files (the “Software”),
+ * and associated documentation files (the "Software"),
  * to deal in the Software without restriction,
  * including without limitation the rights to use,
  * copy, modify, merge, publish, distribute, sublicense,
@@ -18,7 +18,7 @@
  * The above copyright notice and this permission notice shall
  * be included in all copies or substantial portions of the Software.
  *
- * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND,
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
  * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
  * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
  * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
@@ -27,6 +27,7 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
+
 
 #include "tokenizer.h"
 
@@ -37,12 +38,34 @@
 #include <stdlib.h>
 
 const char BINARY_OPERATORS[] = {'+', '-', '*', '/', '%', '='};
-const char *IN_PLACE_BINARY_OPERATORS[] = {"+=", "-=", "*=", "/=", "%="};
-const char *COMPARISON_OPERATORS[] = {"==", "!=", ">", "<", ">=", "<="};
-const char *LOGIC_OPERATORS[] = {"and", "or", "not"};
 
+/**
+ * @brief Skip the meaningless whitespace in the
+ *        file until a token is found.
+ *        Newline characters as well as semicolons
+ *        are valid whitespace, so track those.
+ *
+ * @param fp         File pointer
+ * @param ptr        Pointer to the current position in the buffer
+ * @param buffer     The buffer containing file data
+ * @param bytesRead  Pointer to the count of valid bytes in buffer
+ * @param bufferSize The size of the buffer
+ */
 void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size_t bufferSize);
+
+/**
+ * @brief Get the next token in the file.
+ *
+ * @param fp       File pointer
+ * @return Token - The token found
+ */
 Token next_token(FILE *fp);
+
+/**
+ * @brief Print a representation of a token.
+ *
+ * @param token Token to print
+ */
 void print_token(Token token);
 
 /**
@@ -61,34 +84,6 @@ bool char_in_arr(char ch, const char *arr, int size) {
     return false;
 }
 
-/**
- * @brief Check if a string is in a string array.
- *
- * @param str      String
- * @param arr      Array
- * @param size     Size of arr
- * @return true  - If str is in arr
- * @return false - If str is not in arr
- */
-bool string_in_arr(const char *str, const char *arr[], int size) {
-    for (int i = 0; i < size; i++) {
-        if (strcmp(str, arr[i]) == 0) return true;
-    }
-    return false;
-}
-
-/**
- * @brief Skip the meaningless whitespace in the
- *        file until a token is found.
- *        Newline characters as well as semicolons
- *        are valid whitespace, so track those.
- *
- * @param fp         File pointer
- * @param ptr        Pointer to the current position in the buffer
- * @param buffer     The buffer containing file data
- * @param bytesRead  Pointer to the count of valid bytes in buffer
- * @param bufferSize The size of the buffer
- */
 void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size_t bufferSize) {
     while (true) {
         // Refill buffer if needed
@@ -107,19 +102,28 @@ void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size
                 break;
             }
             // Otherwise skip the whitespace
-            (*ptr)++;
+            while (isspace(ch) && ch != NEWLINE_CHAR) {
+                (*ptr)++;
+                if (*ptr >= buffer + *bytesRead) {
+                    *bytesRead = fread(buffer, 1, bufferSize, fp);
+                    *ptr = buffer;
+                    if (*bytesRead == 0) { // EOF reached
+                        break;
+                    }
+                }
+                ch = **ptr;
+            }
         } else {
             break;
         }
     }
 }
 
-/**
- * @brief Get the next token in the file.
- *
- * @param fp       File pointer
- * @return Token - The token found
- */
+// TODO
+// Ensure buffer is handled correctly (if end is reached, it is filled without breaking and causing an invalid token)
+
+// TODO
+// If possible make helper funcs to prevent repetition (mainly for checking if buffer needs refill and refilling it)
 Token next_token(FILE *fp) {
     static char buffer[BUFFER_SIZE];
     static char *ptr = buffer;
@@ -160,7 +164,14 @@ Token next_token(FILE *fp) {
         // Skip the second '/'
         ptr++;
 
-        while (ptr < buffer + bytesRead && *ptr != NEWLINE_CHAR) {
+        while (true) {
+            // Refill the buffer as needed
+            if (ptr >= buffer + bytesRead) {
+                bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
+                ptr = buffer;
+                if (bytesRead == 0) break; // EOF reached
+            }
+            if (*ptr == NEWLINE_CHAR) break;
             token.value[i++] = *ptr++;
             if (i >= MAX_TOKEN_LENGTH - 1) break;
         }
@@ -176,7 +187,13 @@ Token next_token(FILE *fp) {
         // Skip the '.'
         ptr++;
 
-        while (ptr < buffer + bytesRead) {
+        while (true) {
+            // Refill the buffer as needed
+            if (ptr >= buffer + bytesRead) {
+                bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
+                ptr = buffer;
+                if (bytesRead == 0) break; // EOF reached
+            }
             // End of comment
             if (*ptr == '.' && (ptr + 1 < buffer + bytesRead && *(ptr + 1) == '/')) {
                 ptr += 2; // Skip the closing "./"
@@ -195,7 +212,14 @@ Token next_token(FILE *fp) {
         token.type = TOKEN_STRING;
         int i = 0;
 
-        while (ptr < buffer + bytesRead) { // && (*ptr != quote)) {
+        while (true) {
+            // Refill the buffer if needed
+            if (ptr >= buffer + bytesRead) {
+                bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
+                ptr = buffer;
+                if (bytesRead == 0) break; // EOF reached
+            }
+
             // Check for escape coded quotes
             if (*ptr == '\\') {
                 // Increment twice to skip a "\'" or "\""
@@ -221,13 +245,20 @@ Token next_token(FILE *fp) {
         int i = 0;
         token.value[i++] = ch;
 
-        while (ptr < buffer + bytesRead && (isalnum(*ptr) || *ptr == '_')) {
+        while (isalnum(*ptr) || *ptr == '_') {
+            // Refill the buffer as needed
+            if (ptr >= buffer + bytesRead) {
+                bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
+                ptr = buffer;
+                if (bytesRead == 0) break; // EOF reached
+            }
+
             token.value[i++] = *ptr++;
             if (i >= MAX_TOKEN_LENGTH - 1) break;
         }
         token.value[i] = '\0';
 
-        // stupid
+        // Check for logical operators
         if ((      token.value[0] == 'a'
                 && token.value[1] == 'n'
                 && token.value[2] == 'd'
@@ -254,10 +285,18 @@ Token next_token(FILE *fp) {
         int i = 0;
         token.value[i++] = ch;
 
-        while (ptr < buffer + bytesRead && isdigit(*ptr)) {
+        while (isdigit(*ptr)) {
+            // Refill the buffer as needed
+            if (ptr >= buffer + bytesRead) {
+                bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
+                ptr = buffer;
+                if (bytesRead == 0) break; // EOF reached
+            }
+
             token.value[i++] = *ptr++;
             if (i >= MAX_TOKEN_LENGTH - 1) break;
         }
+
         token.value[i] = '\0';
         return token;
     }
@@ -273,7 +312,7 @@ Token next_token(FILE *fp) {
             return token;
         }
         // If we didn't need the next char, decrement ptr
-        *ptr--;
+        ptr--;
     }
     if (ch == '=') {
         char next = *ptr++;
@@ -314,21 +353,26 @@ Token next_token(FILE *fp) {
         // (like '=')
     }
 
-    // Handle in-place binary operators
+    // Handle in-place and regular binary operators
     // (all in-place binary operators are string of length 2)
     if (ch != '=' && char_in_arr(ch, BINARY_OPERATORS, sizeof BINARY_OPERATORS)) {
-        token.type = TOKEN_IP_BINARY_OP;
-        token.value[0] = ch;
-        token.value[1] = *ptr++;
-        token.value[2] = '\0';
-        return token;
-    }
+        char next = *ptr++;
+        // In-place binary op
+        if (next == '=') {
+            token.type = TOKEN_IP_BINARY_OP;
+            token.value[0] = ch;
+            token.value[1] = next;
+            token.value[2] = '\0';
+            return token;
+        }
 
-    // Handle binary operators
-    if (char_in_arr(ch, BINARY_OPERATORS, sizeof BINARY_OPERATORS)) {
+        // If we didn't need the next char, decrement ptr
+        *ptr--;
+
+        // Regular binary op
         token.type = TOKEN_BINARY_OP;
         token.value[0] = ch;
-        token.value[1] = '\0';
+        token.value[2] = '\0';
         return token;
     }
 
@@ -392,11 +436,6 @@ Token next_token(FILE *fp) {
     return token;
 }
 
-/**
- * @brief Print a representation of a token.
- *
- * @param token Token to print
- */
 void print_token(Token token) {
     const char *token_types[] = {
         // Make sure these align with the defined token
@@ -434,7 +473,7 @@ void print_token(Token token) {
     }
 }
 
-int main(int argc, char const *argv[]) {;
+int main(int argc, char const *argv[]) {
     if (argc != 2) {
         fprintf(stderr, "Usage: tokenizer <source>\n");
         return 1;
@@ -443,7 +482,7 @@ int main(int argc, char const *argv[]) {;
     // Check if the file is a .zen file
     size_t fileLen = strlen(argv[1]);
     int suffixLen = 4; // ".zen"
-    if (suffixLen > fileLen || strcmp(argv[1] + fileLen - suffixLen, ".zen") != 0) {
+    if (strcmp(argv[1] + fileLen - suffixLen, ".zen") != 0) {
         fprintf(stderr, "tokenizer source input must be a .zen file");
         return 1;
     }

@@ -51,7 +51,7 @@ int my_var = 10
 // conditionals
 if 1 == 2 {
     print("what")
-} elseif 1 <= -1 {
+} else if 1 <= -1 {
     print("seriously?")
 } else {
     print("made it")

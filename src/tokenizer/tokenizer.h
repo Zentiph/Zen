@@ -76,8 +76,33 @@ typedef struct {
     char value[MAX_TOKEN_LENGTH];
 } Token;
 
+/**
+ * @brief Skip the meaningless whitespace in the
+ *        file until a token is found.
+ *        Newline characters as well as semicolons
+ *        are valid whitespace, so track those.
+ *
+ * @param fp         File pointer
+ * @param ptr        Pointer to the current position in the buffer
+ * @param buffer     The buffer containing file data
+ * @param bytesRead  Pointer to the count of valid bytes in buffer
+ * @param bufferSize The size of the buffer
+ */
 void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size_t bufferSize);
+
+/**
+ * @brief Get the next token in the file.
+ *
+ * @param fp       File pointer
+ * @return Token - The token found
+ */
 Token next_token(FILE *fp);
+
+/**
+ * @brief Print a representation of a token.
+ *
+ * @param token Token to print
+ */
 void print_token(Token token);
 
 #endif // TOKENIZER_H

@@ -77,6 +77,14 @@ typedef struct {
 } Token;
 
 /**
+ * @brief Convert a TokenType to a string.
+ *
+ * @param type   TokenType
+ * @return char* String representation of the TokenType
+ */
+char *token_type_to_string(TokenType type);
+
+/**
  * @brief Skip the meaningless whitespace in the
  *        file until a token is found.
  *        Newline characters as well as semicolons

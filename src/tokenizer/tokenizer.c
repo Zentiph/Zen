@@ -77,11 +77,43 @@ void print_token(Token token);
  * @return true  - If ch is in arr
  * @return false - If ch is not in arr
  */
-bool char_in_arr(char ch, const char *arr, int size) {
+bool _char_in_arr(char ch, const char *arr, int size) {
     for (int i = 0; i < size; i++) {
         if (arr[i] == ch) return true;
     }
     return false;
+}
+
+/**
+ * @brief Convert a TokenType to a string.
+ *
+ * @param type   TokenType
+ * @return char* String representation of the TokenType
+ */
+char *token_type_to_string(TokenType type) {
+    switch (type) {
+        case TOKEN_COMMENT:       return "TOKEN_COMMENT";
+        case TOKEN_IDENTIFIER:    return "TOKEN_IDENTIFIER";
+        case TOKEN_NUMBER:        return "TOKEN_NUMBER";
+        case TOKEN_BINARY_OP:     return "TOKEN_BINARY_OP";
+        case TOKEN_IP_BINARY_OP:  return "TOKEN_IP_BINARY_OP";
+        case TOKEN_COMPARISON_OP: return "TOKEN_COMPARISON_OP";
+        case TOKEN_LOGIC_OP:      return "TOKEN_LOGIC_OP";
+        case TOKEN_STRING:        return "TOKEN_STRING";
+        case TOKEN_LT_PAREN:      return "TOKEN_LT_PAREN";
+        case TOKEN_RT_PAREN:      return "TOKEN_RT_PAREN";
+        case TOKEN_LT_BRACK:      return "TOKEN_LT_BRACK";
+        case TOKEN_RT_BRACK:      return "TOKEN_RT_BRACK";
+        case TOKEN_LT_CURLY:      return "TOKEN_LT_CURLY";
+        case TOKEN_RT_CURLY:      return "TOKEN_RT_CURLY";
+        case TOKEN_DOT:           return "TOKEN_DOT";
+        case TOKEN_ARROW:         return "TOKEN_ARROW";
+        case TOKEN_DBL_ARROW:     return "TOKEN_DBL_ARROW";
+        case TOKEN_NEWLINE:       return "TOKEN_NEWLINE";
+        case TOKEN_EOF:           return "TOKEN_EOF";
+        case TOKEN_INVALID:       return "TOKEN_INVALID";
+    }
+    return "TOKEN_INVALID";
 }
 
 void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size_t bufferSize) {
@@ -118,9 +150,6 @@ void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size
         }
     }
 }
-
-// TODO
-// Ensure buffer is handled correctly (if end is reached, it is filled without breaking and causing an invalid token)
 
 // TODO
 // If possible make helper funcs to prevent repetition (mainly for checking if buffer needs refill and refilling it)
@@ -355,10 +384,10 @@ Token next_token(FILE *fp) {
 
     // Handle in-place and regular binary operators
     // (all in-place binary operators are string of length 2)
-    if (ch != '=' && char_in_arr(ch, BINARY_OPERATORS, sizeof BINARY_OPERATORS)) {
+    if (_char_in_arr(ch, BINARY_OPERATORS, sizeof BINARY_OPERATORS)) {
         char next = *ptr++;
         // In-place binary op
-        if (next == '=') {
+        if (ch != '=' && next == '=') {
             token.type = TOKEN_IP_BINARY_OP;
             token.value[0] = ch;
             token.value[1] = next;
@@ -471,34 +500,4 @@ void print_token(Token token) {
     } else {
         printf("%s: '%s'\n", token_types[token.type], token.value);
     }
-}
-
-int main(int argc, char const *argv[]) {
-    if (argc != 2) {
-        fprintf(stderr, "Usage: tokenizer <source>\n");
-        return 1;
-    }
-
-    // Check if the file is a .zen file
-    size_t fileLen = strlen(argv[1]);
-    int suffixLen = 4; // ".zen"
-    if (strcmp(argv[1] + fileLen - suffixLen, ".zen") != 0) {
-        fprintf(stderr, "tokenizer source input must be a .zen file");
-        return 1;
-    }
-
-    FILE *fp = fopen(argv[1], "r");
-    if (!fp) {
-        perror("Unable to open file");
-        return 1;
-    }
-
-    Token token;
-    while ((token = next_token(fp)).type != TOKEN_EOF) {
-        print_token(token);
-    }
-    print_token(token); // Print EOF
-
-    fclose(fp);
-    return 0;
 }

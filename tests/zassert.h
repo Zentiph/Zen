@@ -1,7 +1,7 @@
 /**
- * @file test_tokenizer.c
+ * @file zassert.h
  * @author Gavin Borne
- * @brief Tests for the Zen tokenizer
+ * @brief Better assert function for testing
  *
  * @copyright Copyright (c) 2025 Gavin Borne
  *
@@ -28,13 +28,23 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <assert.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "tokenizer.h"
+#ifndef ZASSERT_H
+#define ZASSERT_H
 
-void test_skip_whitespace(const char *test_name, const char *file, const char *expected) {}
-void test_next_token(const char *test_name, const char *file, Token expected) {}
-void test_print_token(const char *test_name, Token token, const char *expected) {}
+const char* ASSERT_EQ_MSG  = "Assertion failed: %s != %s\nFile: %s, Line: %d";
+const char* ASSERT_NEQ_MSG = "Assertion failed: %s == %s\nFile: %s, Line: %d";
+
+/**
+ * @brief A modified assert function that prints a better output
+ *        including the actual values of the variables compared.
+ *
+ * @param condition Condition to assert
+ * @param val1      Value of the first variable
+ * @param val2      Value of the second variable
+ * @param message   Message to print if the assertion fails
+ * @param file      File the of the assertion
+ * @param lineno    Line number of the assertion
+ */
+void _assert(bool condition, void* val1, void* val2, const char* message, const char* file, int lineno);
+
+#endif // ZASSERT_H

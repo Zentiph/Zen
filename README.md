@@ -17,15 +17,15 @@ fn fizzbuzz(int start, int end) {
     while (num < end) {
         string str = ""
         if (num % 3 == 0) {
-            string += "Fizz"
+            str += "Fizz"
         }
         if (num % 4 == 0) {
-            string += "Buzz"
+            str += "Buzz"
         }
         if (num % 4 != 0 and num % 3 != 0) {
-            string += str(num)
+            str += num
         }
-        print(string)
+        print(str)
     }
 }
 

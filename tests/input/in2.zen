@@ -1,0 +1,6 @@
+string greeting = "Hello, world!"
+if greeting.length > 4 {
+    print(greeting)
+} else {
+    print("Greeting too short.")
+}

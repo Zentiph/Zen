@@ -31,8 +31,8 @@
 #ifndef ZASSERT_H
 #define ZASSERT_H
 
-const char* ASSERT_EQ_MSG  = "Assertion failed: %s != %s\nFile: %s, Line: %d";
-const char* ASSERT_NEQ_MSG = "Assertion failed: %s == %s\nFile: %s, Line: %d";
+const char* ASSERT_EQ_MSG  = "Assertion failed: '%s' != '%s'\nFile: %s, Line: %d";
+const char* ASSERT_NEQ_MSG = "Assertion failed: '%s' == '%s'\nFile: %s, Line: %d";
 
 /**
  * @brief A modified assert function that prints a better output
@@ -45,6 +45,6 @@ const char* ASSERT_NEQ_MSG = "Assertion failed: %s == %s\nFile: %s, Line: %d";
  * @param file      File the of the assertion
  * @param lineno    Line number of the assertion
  */
-void _assert(bool condition, void* val1, void* val2, const char* message, const char* file, int lineno);
+void zassert(bool condition, void* val1, void* val2, const char* message, const char* file, int lineno);
 
 #endif // ZASSERT_H

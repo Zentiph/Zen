@@ -20,8 +20,9 @@ if x > 1 and x < 4 {
     print("\"escaped\" string")
 }
 
-// Brackets
-array[int] arr
+// Angle brackets and regular brackets
+array<int> arr = [0, 1, 2]
+arr[0]
 
 // Dot
 import math
@@ -32,13 +33,15 @@ fn add(int x, int y) -> int {
     return x + y
 }
 
-// Double arrow
-(int => int) func = (int x => x * x)
+// Double arrow (lambda expression)
+fn filter((int => bool) filter_func) {
+    // ...
+}
 
-// Newline (semicolon)
+// Newline (newlines are '\n' or ';')
 x += 4; y += 2
 
-// Invalid
+// Invalid token
 ?
 
 // EOF

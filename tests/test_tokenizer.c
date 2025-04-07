@@ -293,7 +293,10 @@ int main(int argc, char const *argv[]) {
     test_next_token(fp, (Token){TOKEN_NEWLINE,       "\n"},                  __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_RT_CURLY,      "}"},                   __FILE__, __LINE__);
 
-
+    /***************************************************************************
+     *                                 TESTING                                 *
+     *                                   END                                   *
+     ***************************************************************************/
 
     fclose(fp);
 

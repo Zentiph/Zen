@@ -10,7 +10,10 @@ statement       = var_decl
                 | func_decl
                 | class_decl
                 | expression_stmt
-                | comment ;
+                | comment
+                | import_stmt
+                | module_decl
+                | export_stmt ;
 
 (* Variable declaration and assignment *)
 (* A variable declaration can have an assignment or not *)
@@ -33,9 +36,16 @@ default_param   = param , "=" , expression ;
 class_decl      = "class" , identifier , [ "[" , type , "]" ] , [ "extends" , identifier , {"," , identifier } ] , block ;
 
 (* Blocks and statements *)
-block           = "{" , { statement } , "}"
+block           = "{" , { statement } , "}" ;
 expression_stmt = expression , end_of_line ;
-end_of_line     = "\n" | ";"
+end_of_line     = "\n" | ";" ;
+
+(* Imports *)
+import_stmt     = "import" , identifier , { "," , identifier } ;
+
+(* Modules *)
+module_decl     = "module" , identifier ;
+export_stmt     = "export" , identifier , { "," , identifier } ;
 
 (* Expressions (using standard operator precedence) *)
 expression      = logical_expr ;

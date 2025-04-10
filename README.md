@@ -1,14 +1,14 @@
 # The Zen Programming Language
-This programming language has been built from scratch primarily as a learning project by a solo developer. Zen is a static-typed interpreted language.
+This programming language has been built from scratch primarily as a learning project by a solo developer. Zen is a static-typed compiled language.
 
 ## Why
-Because I wanted to learn how programming languages work and I'm an asshole who wanted to name a programming language after himself (shameless self-promo).
+To learn how programming languages work, as well as develop a language with similar syntax and type-safety to Java while maintaining the easy development of Python.
 
 ## Inspirations
-The Zen programming language is primarily inspired by Python and C++ syntax. The idea for this project was inspired by [Pinecone](https://github.com/wmww/Pinecone?tab=readme-ov-file).
+The Zen programming language is primarily inspired by Python and Java. The idea for this project was inspired by [Pinecone](https://github.com/wmww/Pinecone?tab=readme-ov-file).
 
 ## Example
-Here is a demo program performing the FizzBuzz algorithm:
+Here is a demo program performing the FizzBuzz algorithm (may be subject to change as the language evolves):
 ```
 // fizzbuzz.zen
 

@@ -4,9 +4,6 @@ Zen is a statically-typed, compiled programming language developed from scratch 
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zentiph/zen)
 ![GitHub last commit](https://img.shields.io/github/last-commit/zentiph/zen)
 
-## Inspirations
-Zen primarily takes inspiration from Python and Java, however the idea for this project was inspired by [Pinecone](https://github.com/wmww/Pinecone?tab=readme-ov-file).
-
 ## Example
 Here is a demo program performing the FizzBuzz algorithm (may be subject to change as the language evolves):
 ```

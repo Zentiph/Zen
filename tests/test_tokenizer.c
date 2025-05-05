@@ -28,7 +28,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,21 +44,52 @@ static char *ptr = buffer;
 static size_t bytesRead = 0;
 
 /**
+ * @brief Resets the file pointer and buffer
+ *
+ * @param fp       File pointer
+ * @param buffer   Buffer to reset
+ * @param ptr      Pointer to the buffer
+ * @param buf_size Size of the buffer
+ */
+void reset_file_and_buffer(FILE *fp, char *buffer, char **ptr, size_t buf_size)
+{
+    fseek(fp, 0, SEEK_SET);
+    memset(buffer, 0, buf_size);
+    *ptr = buffer;
+}
+
+/**
+ * @brief Prepare to read a new input file.
+ *
+ * @param buffer   Input buffer
+ * @param ptr      Pointer to the buffer
+ * @param buf_size Size of the buffer
+ */
+void prep_for_new_file(char *buffer, char **ptr, size_t buf_size)
+{
+    memset(buffer, 0, buf_size);
+    *ptr = buffer;
+    bytesRead = 0;
+}
+
+/**
  * @brief Test the skip_whitespace function,
- *        asserting that the next character is the expected character
+ *        asserting that the next character is the expected character.
  *
  * @param fp       File pointer
  * @param expected Expected character after skipping whitespace
  * @param file     File the of the assertion
  * @param lineno   Line number of the assertion
  */
-void test_skip_whitespace(FILE *fp, const char expected, const char* file, int lineno) {
-    _assert(fp != NULL, fp, NULL, ASSERT_NEQ_MSG, file, lineno);
+void test_skip_whitespace(FILE *fp, const char expected, const char *file, int lineno)
+{
+    zassert(fp != NULL, fp, NULL, ASSERT_NEQ_MSG, file, lineno);
     skip_whitespace(fp, &ptr, buffer, &bytesRead, BUFFER_SIZE);
+
     // Convert the chars to strings for printing
     char actualCh[2] = {*ptr, '\0'};
     char expectedCh[2] = {expected, '\0'};
-    _assert(*ptr == expected, actualCh, expectedCh, ASSERT_EQ_MSG, file, lineno);
+    zassert(*ptr == expected, actualCh, expectedCh, ASSERT_EQ_MSG, file, lineno);
 }
 
 /**
@@ -71,36 +101,37 @@ void test_skip_whitespace(FILE *fp, const char expected, const char* file, int l
  * @param file     File the of the assertion
  * @param lineno   Line number of the assertion
  */
-void test_next_token(FILE *fp, Token expected, const char* file, int lineno) {
-    _assert(fp != NULL, fp, NULL, ASSERT_NEQ_MSG, file, lineno);
+void test_next_token(FILE *fp, Token expected, const char *file, int lineno)
+{
+    zassert(fp != NULL, fp, NULL, ASSERT_NEQ_MSG, file, lineno);
     Token token = next_token(fp);
-    if (token.value != NULL && expected.value != NULL) {
-        _assert(
+    if (token.value != NULL && expected.value != NULL)
+    {
+        zassert(
             strcmp(token.value, expected.value) == 0,
             &token.value,
             &expected.value,
             ASSERT_EQ_MSG,
             file,
-            lineno
-        );
-    } else {
-        _assert(
+            lineno);
+    }
+    else
+    {
+        zassert(
             token.value == expected.value,
             &token.value,
             &expected.value,
             ASSERT_EQ_MSG,
             file,
-            lineno
-        );
+            lineno);
     }
-    _assert(
+    zassert(
         token.type == expected.type,
         token_type_to_string(token.type),
         token_type_to_string(expected.type),
         ASSERT_EQ_MSG,
         file,
-        lineno
-    );
+        lineno);
 }
 
 /**
@@ -108,7 +139,8 @@ void test_next_token(FILE *fp, Token expected, const char* file, int lineno) {
  *
  * @param fp File pointer
  */
-void reset_buffer(FILE *fp) {
+void reset_buffer(FILE *fp)
+{
     fseek(fp, 0, SEEK_SET);
     memset(buffer, 0, BUFFER_SIZE);
     ptr = buffer;
@@ -120,30 +152,36 @@ void reset_buffer(FILE *fp) {
  * the functionality of the tokenizer.
  */
 
-int main(int argc, char const *argv[]) {
-    if (argc > 2) {
+int main(int argc, char const *argv[])
+{
+    if (argc > 2)
+    {
         fprintf(stderr, "Usage: test_tokenizer <source (optional)>\n");
         return 1;
     }
 
     // Source file given, run given file
-    if (argc == 2) {
+    if (argc == 2)
+    {
         // Check if the file is a .zen file
         size_t fileLen = strlen(argv[1]);
         int suffixLen = 4; // ".zen"
-        if (strcmp(argv[1] + fileLen - suffixLen, ".zen") != 0) {
+        if (strcmp(argv[1] + fileLen - suffixLen, ".zen") != 0)
+        {
             fprintf(stderr, "tokenizer source input must be a .zen file");
             return 1;
         }
 
         FILE *fp = fopen(argv[1], "r");
-        if (!fp) {
+        if (!fp)
+        {
             perror("Unable to open file");
             return 1;
         }
 
         Token token;
-        while ((token = next_token(fp)).type != TOKEN_EOF) {
+        while ((token = next_token(fp)).type != TOKEN_EOF)
+        {
             print_token(token);
         }
         print_token(token); // Print EOF
@@ -153,15 +191,21 @@ int main(int argc, char const *argv[]) {
     }
 
     // No source file, run pre-made tests
-    // Test in1.zen
+    printf("No source file given, running pre-made tests...\n");
+
+    /***************************************************************************
+     *                                 TESTING                                 *
+     *                                 in1.zen                                 *
+     ***************************************************************************/
     FILE *fp = fopen("tests/input/in1.zen", "r");
-    if (!fp) {
+    if (!fp)
+    {
         perror("Unable to open file");
         return 1;
     }
 
     test_skip_whitespace(fp, 'i', __FILE__, __LINE__);
-    ptr += 3; // Skip the rest of the word "int"
+    ptr += strlen("int"); // Skip the rest of the word "int"
     test_skip_whitespace(fp, 'x', __FILE__, __LINE__);
     ptr++;
     test_skip_whitespace(fp, '=', __FILE__, __LINE__);
@@ -171,10 +215,8 @@ int main(int argc, char const *argv[]) {
     test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
     ptr++;
     test_skip_whitespace(fp, 'p', __FILE__, __LINE__);
-    ptr += 5; // Skip the rest of the word "print"
-    test_skip_whitespace(fp, '(', __FILE__, __LINE__);
 
-    reset_buffer(fp);
+    reset_file_and_buffer(fp, buffer, &ptr, BUFFER_SIZE);
 
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "int"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "x"}, __FILE__, __LINE__);
@@ -186,6 +228,98 @@ int main(int argc, char const *argv[]) {
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "x"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_RT_PAREN, ")"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_EOF, ""}, __FILE__, __LINE__);
+
+    fclose(fp);
+
+    /***************************************************************************
+     *                                 TESTING                                 *
+     *                                 in2.zen                                 *
+     ***************************************************************************/
+
+    prep_for_new_file(buffer, &ptr, BUFFER_SIZE);
+
+    fp = fopen("tests/input/in2.zen", "r");
+    if (!fp)
+    {
+        perror("Unable to open file");
+        return 1;
+    }
+
+    test_skip_whitespace(fp, 's', __FILE__, __LINE__);
+    ptr += strlen("string");
+    test_skip_whitespace(fp, 'g', __FILE__, __LINE__);
+    ptr += strlen("greeting");
+    test_skip_whitespace(fp, '=', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, '"', __FILE__, __LINE__);
+    ptr += strlen("\"Hello, world!\"");
+    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, 'i', __FILE__, __LINE__);
+    ptr += strlen("if");
+    test_skip_whitespace(fp, 'g', __FILE__, __LINE__);
+    ptr += strlen("greeting.length");
+    test_skip_whitespace(fp, '>', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, '4', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, '{', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, 'p', __FILE__, __LINE__);
+    ptr += strlen("print(greeting)");
+    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, '}', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, 'e', __FILE__, __LINE__);
+    ptr += strlen("else");
+    test_skip_whitespace(fp, '{', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, 'p', __FILE__, __LINE__);
+    ptr += strlen("print(\"Greeting too short.\")");
+    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
+    ptr++;
+    test_skip_whitespace(fp, '}', __FILE__, __LINE__);
+
+    reset_file_and_buffer(fp, buffer, &ptr, BUFFER_SIZE);
+
+    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "string"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_BINARY_OP, "="}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_STRING, "Hello, world!"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "if"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_DOT, "."}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "length"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_COMPARISON_OP, ">"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_NUMBER, "4"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_LT_CURLY, "{"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "print"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_LT_PAREN, "("}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_RT_PAREN, ")"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_RT_CURLY, "}"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "else"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_LT_CURLY, "{"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "print"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_LT_PAREN, "("}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_STRING, "Greeting too short."}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_RT_PAREN, ")"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_RT_CURLY, "}"}, __FILE__, __LINE__);
+
+    /***************************************************************************
+     *                                 TESTING                                 *
+     *                                   END                                   *
+     ***************************************************************************/
 
     fclose(fp);
 

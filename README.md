@@ -1,14 +1,11 @@
 # The Zen Programming Language
-This programming language has been built from scratch primarily as a learning project by a solo developer. Zen is a static-typed interpreted language.
+Zen is a statically-typed, compiled programming language developed from scratch as a personal learning project. It aims to blend the type safety and structure of Java with the simplicity and developer-friendly nature of Python, making for a truly zen-like coding experience.
 
-## Why
-Because I wanted to learn how programming languages work and I'm an asshole who wanted to name a programming language after himself (shameless self-promo).
-
-## Inspirations
-The Zen programming language is primarily inspired by Python and C++ syntax. The idea for this project was inspired by [Pinecone](https://github.com/wmww/Pinecone?tab=readme-ov-file).
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zentiph/zen)
+![GitHub last commit](https://img.shields.io/github/last-commit/zentiph/zen)
 
 ## Example
-Here is a demo program performing the FizzBuzz algorithm:
+Here is a demo program performing the FizzBuzz algorithm (may be subject to change as the language evolves):
 ```
 // fizzbuzz.zen
 
@@ -17,15 +14,15 @@ fn fizzbuzz(int start, int end) {
     while (num < end) {
         string str = ""
         if (num % 3 == 0) {
-            string += "Fizz"
+            str += "Fizz"
         }
         if (num % 4 == 0) {
-            string += "Buzz"
+            str += "Buzz"
         }
         if (num % 4 != 0 and num % 3 != 0) {
-            string += str(num)
+            str += num
         }
-        print(string)
+        print(str)
     }
 }
 
@@ -38,4 +35,4 @@ Zen currently supports:
 * Nothing :D
 
 ## Contributing
-This project is not yet big enough or organized enough to accept contributions, but if you have an inquiry, request, or new feature idea, reach out to me at zentiphdev@gmail.com.
+This project is not yet big enough or organized enough to accept contributions, but if you have an inquiry, request, or new feature idea, reach out to me at [zentiphdev@gmail.com](mailto:zentiphdev@gmail.com).

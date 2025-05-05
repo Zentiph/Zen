@@ -43,7 +43,7 @@
  * @param file      File the of the assertion
  * @param lineno    Line number of the assertion
  */
-void _assert(bool condition, void* val1, void* val2, const char* message, const char* file, int lineno) {
+void zassert(bool condition, void* val1, void* val2, const char* message, const char* file, int lineno) {
     if (!condition) {
         if (val1 == NULL && val2 == NULL) {
             fprintf(

@@ -104,6 +104,17 @@ void test_next_token(FILE *fp, Token expected, const char* file, int lineno) {
 }
 
 /**
+ * @brief Reset the file pointer and buffer
+ *
+ * @param fp File pointer
+ */
+void reset_buffer(FILE *fp) {
+    fseek(fp, 0, SEEK_SET);
+    memset(buffer, 0, BUFFER_SIZE);
+    ptr = buffer;
+}
+
+/**
  * We do not have a test_print_token function here because
  * print_token is simply for debugging and not related to
  * the functionality of the tokenizer.
@@ -163,10 +174,7 @@ int main(int argc, char const *argv[]) {
     ptr += 5; // Skip the rest of the word "print"
     test_skip_whitespace(fp, '(', __FILE__, __LINE__);
 
-    // Reset the file pointer and buffer
-    fseek(fp, 0, SEEK_SET);
-    memset(buffer, 0, BUFFER_SIZE);
-    ptr = buffer;
+    reset_buffer(fp);
 
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "int"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "x"}, __FILE__, __LINE__);

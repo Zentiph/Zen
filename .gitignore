@@ -1,4 +1,12 @@
-sandbox.*
+# Standard ignores
 .vscode/
 .mypy_cache/
+
+# Compiled programs
 *.exe
+
+# Bison parser verbose output
+*.output
+
+# Experimentation
+sandbox.*

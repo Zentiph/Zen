@@ -23,6 +23,7 @@ statement       = var_decl
                 | while_stmt
                 | for_stmt
                 | func_decl
+                | func_call
                 | class_decl
                 | expression_stmt
                 | comment
@@ -43,12 +44,13 @@ for_stmt        = "for" , type , identifier , "in" , expression , block ;
 
 (* Functions *)
 func_decl       = "fn" , identifier , "(" , [ param_list ] , ")" , [ "->" , type ] , block ;
+func_call       = identifier , "(" [ expression , { "," expression } ] ")"
 param_list      = { param , { "," , param} } { "," default_param } ;
-param           = type , identifier [ "=" expression ] ;
+param           = type , identifier ;
 default_param   = param , "=" , expression ;
 
 (* Classes *)
-class_decl      = "class" , identifier , [ "[" , type , "]" ] , [ "extends" , identifier , {"," , identifier } ] , block ;
+class_decl      = "class" , identifier , [ "<" , type , ">" ] , [ "extends" , identifier ] , block ;
 
 (* Blocks and statements *)
 block           = "{" , { statement } , "}" ;
@@ -56,7 +58,7 @@ expression_stmt = expression , end_of_line ;
 end_of_line     = "\n" | ";" ;
 
 (* Imports *)
-import_stmt     = "import" , identifier , { "," , identifier } ;
+import_stmt     = "import" , identifier , { "," , identifier } , [ "from" , identifier ] ;
 
 (* Modules *)
 module_decl     = "module" , identifier ;
@@ -65,14 +67,14 @@ export_stmt     = "export" , identifier , { "," , identifier } ;
 (* Expressions (using standard operator precedence) *)
 expression      = logical_expr ;
 logical_expr    = relational_expr ,
-                  { ( "and" | "or" | "&&" | "||" ) , relational_expr } ;
+                  { ( "and" | "or" ) , relational_expr } ;
 relational_expr = additive_expr ,
                   { ( ">" | "<" | ">=" | "<=" | "==" | "!=" ) , additive_expr }
 additive_expr   = multiplicative_expr ,
                   { ( "+" | "-" ) , multiplicative_expr } ;
 multiplicative_expr = unary_expr ,
                   { ( "*" | "/" | "%" ) , unary_expr } ;
-unary_expr      = [ ( "not" | "!" | "-" ) ] , primary_expr ;
+unary_expr      = [ ( "not" | "-" ) ] , primary_expr ;
 primary_expr    = number | identifier | string_literal | "(" , expression , ")" ;
 
 (* Types *)

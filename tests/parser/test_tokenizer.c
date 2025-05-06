@@ -22,7 +22,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../src/tokenizer/tokenizer.h"
+#include "../../src/parser/tokenizer/tokenizer.h"
 #include "zassert.h"
 
 /**
@@ -187,7 +187,7 @@ int main(int argc, char const *argv[])
      *                                 TESTING                                 *
      *                                 in1.zen                                 *
      ***************************************************************************/
-    FILE *fp = fopen("tests/input/in1.zen", "r");
+    FILE *fp = fopen("tests/parser/input/in1.zen", "r");
     if (!fp)
     {
         perror("Unable to open file");
@@ -210,7 +210,7 @@ int main(int argc, char const *argv[])
 
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "int"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "x"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_BINARY_OP, "="}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_ASSIGNMENT, "="}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_NUMBER, "5"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "print"}, __FILE__, __LINE__);
@@ -228,7 +228,7 @@ int main(int argc, char const *argv[])
 
     prep_for_new_file(buffer, &ptr, BUFFER_SIZE);
 
-    fp = fopen("tests/input/in2.zen", "r");
+    fp = fopen("tests/parser/input/in2.zen", "r");
     if (!fp)
     {
         perror("Unable to open file");
@@ -279,10 +279,10 @@ int main(int argc, char const *argv[])
 
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "string"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_BINARY_OP, "="}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_ASSIGNMENT, "="}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_STRING, "Hello, world!"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "if"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_IF, "if"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_DOT, "."}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "length"}, __FILE__, __LINE__);
@@ -296,7 +296,7 @@ int main(int argc, char const *argv[])
     test_next_token(fp, (Token){TOKEN_RT_PAREN, ")"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_RT_CURLY, "}"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "else"}, __FILE__, __LINE__);
+    test_next_token(fp, (Token){TOKEN_ELSE, "else"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_LT_CURLY, "{"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
     test_next_token(fp, (Token){TOKEN_IDENTIFIER, "print"}, __FILE__, __LINE__);

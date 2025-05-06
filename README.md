@@ -36,3 +36,6 @@ Zen currently supports:
 
 ## Contributing
 This project is not yet big enough or organized enough to accept contributions, but if you have an inquiry, request, or new feature idea, reach out to me at [zentiphdev@gmail.com](mailto:zentiphdev@gmail.com).
+
+## License
+This project is licensed under the GNU General Public License Version 3. [View the license](LICENSE.md) for more information.

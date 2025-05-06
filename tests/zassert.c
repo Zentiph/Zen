@@ -2,30 +2,20 @@
  * @file zassert.c
  * @author Gavin Borne
  * @brief Better assert function for testing
+ * @copyright Copyright (C) 2025  Gavin Borne
  *
- * @copyright Copyright (c) 2025 Gavin Borne
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
  *
- * Permission is hereby granted, free of charge,
- * to any person obtaining a copy of this software
- * and associated documentation files (the "Software"),
- * to deal in the Software without restriction,
- * including without limitation the rights to use,
- * copy, modify, merge, publish, distribute, sublicense,
- * and/or sell copies of the Software, and to permit persons
- * to whom the Software is furnished to do so, subject to the
- * following conditions:
- *
- * The above copyright notice and this permission notice shall
- * be included in all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
- * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
- * OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
- * NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
- * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
- * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
- * DEALINGS IN THE SOFTWARE.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #include <stdbool.h>
@@ -43,45 +33,46 @@
  * @param file      File the of the assertion
  * @param lineno    Line number of the assertion
  */
-void zassert(bool condition, void* val1, void* val2, const char* message, const char* file, int lineno) {
-    if (!condition) {
-        if (val1 == NULL && val2 == NULL) {
+void zassert(bool condition, void *val1, void *val2, const char *message, const char *file, int lineno)
+{
+    if (!condition)
+    {
+        if (val1 == NULL && val2 == NULL)
+        {
             fprintf(
                 stderr,
                 "Assertion failed: Values are NULL\nFile: %s, Line: %d",
                 file,
-                lineno
-            );
+                lineno);
             exit(1);
         }
-        if (val1 == NULL) {
+        if (val1 == NULL)
+        {
             fprintf(
                 stderr,
                 "Assertion failed: 1st value is NULL\nFile: %s, Line: %d",
-                (char*)val2,
+                (char *)val2,
                 file,
-                lineno
-            );
+                lineno);
             exit(1);
         }
-        if (val2 == NULL) {
+        if (val2 == NULL)
+        {
             fprintf(
                 stderr,
                 "Assertion failed: 2nd value is NULL\nFile: %s, Line: %d",
-                (char*)val1,
+                (char *)val1,
                 file,
-                lineno
-            );
+                lineno);
             exit(1);
         }
         fprintf(
             stderr,
             message,
-            (char*)val1,
-            (char*)val2,
+            (char *)val1,
+            (char *)val2,
             file,
-            lineno
-        );
+            lineno);
         exit(1);
     }
     printf("Test at %s:%d OK\n", file, lineno);

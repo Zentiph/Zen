@@ -28,17 +28,31 @@
 #include <stdlib.h>
 
 /**
- * @brief Check if a token matches the given keyword.
- *
- * @param token    Token to check
- * @param keyword  Keyword to compare to
- * @return true  - If the token's value equals the keyword
- * @return false - Otherwise
+ * @brief Representation of a keyword token.
  */
-bool _token_matches_keyword(Token token, const char *keyword)
+typedef struct
 {
-   return strcmp(token.value, keyword) == 0;
-}
+   const char *keyword;
+   TokenType type;
+} Keyword;
+
+static const Keyword keyword_table[] = {
+    {"if", TOKEN_IF},
+    {"else", TOKEN_ELSE},
+    {"while", TOKEN_WHILE},
+    {"for", TOKEN_FOR},
+    {"in", TOKEN_IN},
+    {"fn", TOKEN_FN},
+    {"class", TOKEN_CLASS},
+    {"extends", TOKEN_EXTENDS},
+    {"import", TOKEN_IMPORT},
+    {"from", TOKEN_FROM},
+    {"export", TOKEN_EXPORT},
+    {"module", TOKEN_MODULE},
+    {"and", TOKEN_AND},
+    {"or", TOKEN_OR},
+    {"not", TOKEN_NOT},
+    {NULL, TOKEN_INVALID}};
 
 /**
  * @brief Skip the meaningless whitespace in the
@@ -274,73 +288,17 @@ Token next_token(FILE *fp, TokenizerState *state)
       }
       token.value[i] = '\0';
 
-      // TODO: USE A MAP OR SOMETHING BETTER FOR THIS
       // Check for keywords
-      if (_token_matches_keyword(token, "if"))
+      for (int i = 0; keyword_table[i].keyword != NULL; i++)
       {
-         token.type = TOKEN_IF;
-      }
-      else if (_token_matches_keyword(token, "else"))
-      {
-         token.type = TOKEN_ELSE;
-      }
-      else if (_token_matches_keyword(token, "while"))
-      {
-         token.type = TOKEN_WHILE;
-      }
-      else if (_token_matches_keyword(token, "for"))
-      {
-         token.type = TOKEN_FOR;
-      }
-      else if (_token_matches_keyword(token, "fn"))
-      {
-         token.type = TOKEN_FN;
-      }
-      else if (_token_matches_keyword(token, "class"))
-      {
-         token.type = TOKEN_CLASS;
-      }
-      else if (_token_matches_keyword(token, "import"))
-      {
-         token.type = TOKEN_IMPORT;
-      }
-      else if (_token_matches_keyword(token, "from"))
-      {
-         token.type = TOKEN_FROM;
-      }
-      else if (_token_matches_keyword(token, "export"))
-      {
-         token.type = TOKEN_EXPORT;
-      }
-      else if (_token_matches_keyword(token, "module"))
-      {
-         token.type = TOKEN_MODULE;
-      }
-      else if (_token_matches_keyword(token, "and"))
-      {
-         token.type = TOKEN_AND;
-      }
-      else if (_token_matches_keyword(token, "or"))
-      {
-         token.type = TOKEN_OR;
-      }
-      else if (_token_matches_keyword(token, "not"))
-      {
-         token.type = TOKEN_NOT;
-      }
-      else if (_token_matches_keyword(token, "in"))
-      {
-         token.type = TOKEN_IN;
-      }
-      else if (_token_matches_keyword(token, "extends"))
-      {
-         token.type = TOKEN_EXTENDS;
-      }
-      else
-      {
-         token.type = TOKEN_IDENTIFIER;
+         if (strcmp(token.value, keyword_table[i].keyword) == 0)
+         {
+            token.type = keyword_table[i].type;
+            return token;
+         }
       }
 
+      token.type = TOKEN_IDENTIFIER;
       return token;
    }
 
@@ -382,7 +340,7 @@ Token next_token(FILE *fp, TokenizerState *state)
          return token;
       }
       // If we didn't need the next char, go back
-      retreat(state);
+      move_pointer(state, -1);
    }
    if (ch == '=')
    {
@@ -396,7 +354,7 @@ Token next_token(FILE *fp, TokenizerState *state)
          return token;
       }
       // If we didn't need the next char, decrement ptr
-      retreat(state);
+      move_pointer(state, -1);
    }
 
    // Handle comparison operators
@@ -434,7 +392,7 @@ Token next_token(FILE *fp, TokenizerState *state)
 
       // If we didn't need the next char,
       // decrement the ptr
-      retreat(state);
+      move_pointer(state, -1);
       // '<', '>', or '='
       switch (ch)
       {
@@ -496,7 +454,7 @@ Token next_token(FILE *fp, TokenizerState *state)
       }
 
       // If we didn't need the next char, decrement ptr
-      retreat(state);
+      move_pointer(state, -1);
 
       // Regular binary op
       if (ch == '+')

@@ -113,14 +113,6 @@ typedef struct
 } Token;
 
 /**
- * @brief Convert a TokenType to a string.
- *
- * @param type   TokenType
- * @return char* String representation of the TokenType
- */
-char *token_type_to_string(TokenType type);
-
-/**
  * @brief Skip the meaningless whitespace in the
  *        file until a token is found.
  *        Newline characters as well as semicolons
@@ -139,12 +131,5 @@ void skip_whitespace(FILE *fp, TokenizerState *state);
  * @return Token - The token found
  */
 Token next_token(FILE *fp, TokenizerState *state);
-
-/**
- * @brief Print a representation of a token.
- *
- * @param token Token to print
- */
-void print_token(Token token);
 
 #endif // TOKENIZER_H

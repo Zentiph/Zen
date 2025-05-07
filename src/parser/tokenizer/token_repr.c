@@ -23,10 +23,10 @@
 /**
  * @brief Convert a TokenType to a string.
  *
- * @param type   TokenType
- * @return char* String representation of the TokenType
+ * @param type           TokenType
+ * @return const char* - String representation of the TokenType
  */
-char *token_type_to_string(TokenType type)
+const char *token_type_to_string(TokenType type)
 {
    switch (type)
    {

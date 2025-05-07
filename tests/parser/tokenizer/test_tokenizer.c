@@ -26,9 +26,8 @@
 #include <string.h>
 
 #include "../zassert.h"
-
-#include "../../../src/parser/tokenizer/tokenizer.h"
 #include "../../../src/parser/tokenizer/state.h"
+#include "../../../src/parser/tokenizer/tokenizer.h"
 #include "../../../src/parser/tokenizer/token_repr.h"
 
 TokenizerState *ts;

@@ -18,14 +18,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "state.h"
-#include "tokenizer.h"
-
 #include <ctype.h>
-#include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "state.h"
+#include "tokenizer.h"
 
 /**
  * @brief Representation of a keyword token.

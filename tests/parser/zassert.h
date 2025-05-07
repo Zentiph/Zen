@@ -37,6 +37,6 @@ const char *ASSERT_NEQ_MSG = "Assertion failed: '%s' == '%s'\nFailure at: %s:%d"
  * @param file      File the of the assertion
  * @param lineno    Line number of the assertion
  */
-void zassert(bool condition, void *val1, void *val2, const char *message, const char *file, int lineno);
+void zassert(bool condition, const void *val1, const void *val2, const char *message, const char *file, int lineno);
 
 #endif // ZASSERT_H

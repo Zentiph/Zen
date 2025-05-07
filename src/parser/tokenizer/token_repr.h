@@ -1,7 +1,7 @@
 /**
- * @file parser.c
+ * @file token_repr.h
  * @author Gavin Borne
- * @brief Tokenizer for the Zen programming language
+ * @brief Representation for tokens header for the Zen programming language
  * @copyright Copyright (C) 2025  Gavin Borne
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,39 +18,22 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
-
-#include "tokenizer/tokenizer.h"
-
-Token current;
+#ifndef TOKEN_REPR_H
+#define TOKEN_REPR_H
 
 /**
- * @brief Advance to the next token.
+ * @brief Convert a TokenType to a string.
  *
- * @param fp File pointer
+ * @param type   TokenType
+ * @return char* String representation of the TokenType
  */
-void advance(FILE *fp)
-{
-   current = next_token(fp);
-}
+char *token_type_to_string(TokenType type);
 
 /**
- * @brief Check if the current token's type matches the given token type.
- *        Advance to the next token if so.
+ * @brief Print a representation of a token.
  *
- * @param type     Token type
- * @param fp       File pointer
- * @return true  - If the types match
- * @return false - Otherwise
+ * @param token Token to print
  */
-bool types_match(TokenType type, FILE *fp)
-{
-   if (current.type == type)
-   {
-      advance(fp);
-      return true;
-   }
-   return false;
-}
+void print_token(Token token);
 
-Node
+#endif // TOKEN_REPR_H

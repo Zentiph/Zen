@@ -23,16 +23,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "state.h"
 
 #define MAX_TOKEN_LENGTH 128
 #define NEWLINE_CHAR '\n'
-#define BUFFER_SIZE 1024
 
 /**
  * @enum TokenType
  * @brief All token types.
- *        FILEEND is used instead of EOF to avoid
- *        name conflicts with stdio.h.
  */
 typedef enum
 {
@@ -53,33 +51,54 @@ typedef enum
     TOKEN_IN,
     TOKEN_EXTENDS,
 
-    // Variable tokens
+    // Variable size tokens
     TOKEN_COMMENT,
     TOKEN_IDENTIFIER,
     TOKEN_NUMBER,
-    TOKEN_ASSIGNMENT,
+    TOKEN_STRING,
+
+    // Standard operators
+    TOKEN_ASSIGN,
     TOKEN_ADD,
     TOKEN_SUB,
     TOKEN_MUL,
     TOKEN_DIV,
     TOKEN_MOD,
-    TOKEN_LT_ARROW_BRACK,
-    TOKEN_RT_ARROW_BRACK,
-    TOKEN_IP_BINARY_OP,
-    TOKEN_COMPARISON_OP,
-    TOKEN_STRING,
+
+    // In-place assignment
+    TOKEN_ADD_ASSIGN,
+    TOKEN_SUB_ASSIGN,
+    TOKEN_MUL_ASSIGN,
+    TOKEN_DIV_ASSIGN,
+    TOKEN_MOD_ASSIGN,
+
+    // Comparison
+    TOKEN_LT,
+    TOKEN_GT,
+    TOKEN_LE,
+    TOKEN_GE,
+    TOKEN_EQ,
+    TOKEN_NE,
+
+    // Containers
     TOKEN_LT_PAREN,
     TOKEN_RT_PAREN,
     TOKEN_LT_BRACK,
     TOKEN_RT_BRACK,
     TOKEN_LT_CURLY,
     TOKEN_RT_CURLY,
-    TOKEN_DOT,
-    TOKEN_COMMA,
+
+    // Arrows
     TOKEN_ARROW,
     TOKEN_DBL_ARROW,
+
+    // Single chars
+    TOKEN_DOT,
+    TOKEN_COMMA,
     TOKEN_NEWLINE,
     TOKEN_EOF,
+
+    // None of the above
     TOKEN_INVALID
 } TokenType;
 
@@ -107,21 +126,19 @@ char *token_type_to_string(TokenType type);
  *        Newline characters as well as semicolons
  *        are valid whitespace, so track those.
  *
- * @param fp         File pointer
- * @param ptr        Pointer to the current position in the buffer
- * @param buffer     The buffer containing file data
- * @param bytesRead  Pointer to the count of valid bytes in buffer
- * @param bufferSize The size of the buffer
+ * @param fp    File pointer
+ * @param state Tokenizer state
  */
-void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size_t bufferSize);
+void skip_whitespace(FILE *fp, TokenizerState *state);
 
 /**
  * @brief Get the next token in the file.
  *
  * @param fp       File pointer
+ * @param state    Tokenizer state
  * @return Token - The token found
  */
-Token next_token(FILE *fp);
+Token next_token(FILE *fp, TokenizerState *state);
 
 /**
  * @brief Print a representation of a token.

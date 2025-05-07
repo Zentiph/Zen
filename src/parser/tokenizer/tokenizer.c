@@ -18,6 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include "state.h"
 #include "tokenizer.h"
 
 #include <ctype.h>
@@ -25,27 +26,6 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-const char BINARY_OPERATORS[] = {'+', '-', '*', '/', '%'};
-
-/**
- * @brief Check if a char is in a char array.
- *
- * @param ch       Char
- * @param arr      Array
- * @param size     Size of arr
- * @return true  - If ch is in arr
- * @return false - If ch is not in arr
- */
-bool _char_in_arr(char ch, const char *arr, int size)
-{
-   for (int i = 0; i < size; i++)
-   {
-      if (arr[i] == ch)
-         return true;
-   }
-   return false;
-}
 
 /**
  * @brief Check if a token matches the given keyword.
@@ -61,132 +41,27 @@ bool _token_matches_keyword(Token token, const char *keyword)
 }
 
 /**
- * @brief Convert a TokenType to a string.
- *
- * @param type   TokenType
- * @return char* String representation of the TokenType
- */
-char *token_type_to_string(TokenType type)
-{
-   switch (type)
-   {
-   case TOKEN_IF:
-      return "TOKEN_IF";
-   case TOKEN_ELSE:
-      return "TOKEN_ELSE";
-   case TOKEN_WHILE:
-      return "TOKEN_WHILE";
-   case TOKEN_FOR:
-      return "TOKEN_FOR";
-   case TOKEN_FN:
-      return "TOKEN_FN";
-   case TOKEN_CLASS:
-      return "TOKEN_CLASS";
-   case TOKEN_IMPORT:
-      return "TOKEN_IMPORT";
-   case TOKEN_FROM:
-      return "TOKEN_FROM";
-   case TOKEN_EXPORT:
-      return "TOKEN_EXPORT";
-   case TOKEN_MODULE:
-      return "TOKEN_MODULE";
-   case TOKEN_AND:
-      return "TOKEN_AND";
-   case TOKEN_OR:
-      return "TOKEN_OR";
-   case TOKEN_NOT:
-      return "TOKEN_NOT";
-   case TOKEN_IN:
-      return "TOKEN_IN";
-   case TOKEN_EXTENDS:
-      return "TOKEN_EXTENDS";
-
-   case TOKEN_COMMENT:
-      return "TOKEN_COMMENT";
-   case TOKEN_IDENTIFIER:
-      return "TOKEN_IDENTIFIER";
-   case TOKEN_NUMBER:
-      return "TOKEN_NUMBER";
-   case TOKEN_ASSIGNMENT:
-      return "TOKEN_ASSIGNMENT";
-   case TOKEN_ADD:
-      return "TOKEN_ADD";
-   case TOKEN_SUB:
-      return "TOKEN_SUB";
-   case TOKEN_MUL:
-      return "TOKEN_MUL";
-   case TOKEN_DIV:
-      return "TOKEN_DIV";
-   case TOKEN_MOD:
-      return "TOKEN_MOD";
-   case TOKEN_LT_ARROW_BRACK:
-      return "TOKEN_LT_ARROW_BRACK";
-   case TOKEN_RT_ARROW_BRACK:
-      return "TOKEN_RT_ARROW_BRACK";
-   case TOKEN_IP_BINARY_OP:
-      return "TOKEN_IP_BINARY_OP";
-   case TOKEN_COMPARISON_OP:
-      return "TOKEN_COMPARISON_OP";
-   case TOKEN_STRING:
-      return "TOKEN_STRING";
-   case TOKEN_LT_PAREN:
-      return "TOKEN_LT_PAREN";
-   case TOKEN_RT_PAREN:
-      return "TOKEN_RT_PAREN";
-   case TOKEN_LT_BRACK:
-      return "TOKEN_LT_BRACK";
-   case TOKEN_RT_BRACK:
-      return "TOKEN_RT_BRACK";
-   case TOKEN_LT_CURLY:
-      return "TOKEN_LT_CURLY";
-   case TOKEN_RT_CURLY:
-      return "TOKEN_RT_CURLY";
-   case TOKEN_DOT:
-      return "TOKEN_DOT";
-   case TOKEN_COMMA:
-      return "TOKEN_COMMA";
-   case TOKEN_ARROW:
-      return "TOKEN_ARROW";
-   case TOKEN_DBL_ARROW:
-      return "TOKEN_DBL_ARROW";
-   case TOKEN_NEWLINE:
-      return "TOKEN_NEWLINE";
-   case TOKEN_EOF:
-      return "TOKEN_EOF";
-   case TOKEN_INVALID:
-      return "TOKEN_INVALID";
-   }
-   return "TOKEN_INVALID";
-}
-
-/**
  * @brief Skip the meaningless whitespace in the
  *        file until a token is found.
  *        Newline characters as well as semicolons
  *        are valid whitespace, so track those.
  *
- * @param fp         File pointer
- * @param ptr        Pointer to the current position in the buffer
- * @param buffer     The buffer containing file data
- * @param bytesRead  Pointer to the count of valid bytes in buffer
- * @param bufferSize The size of the buffer
+ * @param fp    File pointer
+ * @param state Tokenizer state
  */
-void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size_t bufferSize)
+void skip_whitespace(FILE *fp, TokenizerState *state)
 {
    while (true)
    {
-      // Refill buffer if needed
-      if (*ptr >= buffer + *bytesRead)
+      if (buffer_full(state))
       {
-         *bytesRead = fread(buffer, 1, bufferSize, fp);
-         *ptr = buffer;
-         if (*bytesRead == 0)
+         if (refill_buffer(fp, state) == 0)
          { // EOF reached
             break;
          }
       }
 
-      char ch = **ptr;
+      char ch = current_char(state);
       if (isspace(ch))
       {
          if (ch == NEWLINE_CHAR)
@@ -197,17 +72,15 @@ void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size
          // Otherwise skip the whitespace
          while (isspace(ch) && ch != NEWLINE_CHAR)
          {
-            (*ptr)++;
-            if (*ptr >= buffer + *bytesRead)
+            move_pointer(state, 1);
+            if (buffer_full(state))
             {
-               *bytesRead = fread(buffer, 1, bufferSize, fp);
-               *ptr = buffer;
-               if (*bytesRead == 0)
+               if (refill_buffer(fp, state) == 0)
                { // EOF reached
                   break;
                }
             }
-            ch = **ptr;
+            ch = current_char(state);
          }
       }
       else
@@ -217,73 +90,61 @@ void skip_whitespace(FILE *fp, char **ptr, char *buffer, size_t *bytesRead, size
    }
 }
 
-// TODO
-// If possible make helper funcs to prevent repetition (mainly for checking if buffer needs refill and refilling it)
 /**
  * @brief Get the next token in the file.
  *
  * @param fp       File pointer
+ * @param state    Tokenizer state
  * @return Token - The token found
  */
-Token next_token(FILE *fp)
+Token next_token(FILE *fp, TokenizerState *state)
 {
-   static char buffer[BUFFER_SIZE];
-   static char *ptr = buffer;
-   static size_t bytesRead = 0;
-
    Token token;
    token.value[0] = '\0'; // Reset token value
 
-   // Refill the buffer if needed and check for EOF
-   if (ptr >= buffer + bytesRead)
+   if (buffer_full(state))
    {
-      bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
-      ptr = buffer;
-      if (bytesRead == 0)
+      if (refill_buffer(fp, state) == 0)
+      { // No new data read, reached EOF
+         token.type = TOKEN_EOF;
+         return token;
+      }
+   }
+
+   skip_whitespace(fp, state);
+
+   if (buffer_full(state))
+   {
+      if (refill_buffer(fp, state) == 0)
       {
          token.type = TOKEN_EOF;
          return token;
       }
    }
 
-   // Skip over whitespace in the buffer
-   skip_whitespace(fp, &ptr, buffer, &bytesRead, BUFFER_SIZE);
-   // Check if we skipped to the end of the buffer
-   if (ptr >= buffer + bytesRead)
-   {
-      bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
-      ptr = buffer;
-      if (bytesRead == 0)
-      {
-         token.type = TOKEN_EOF;
-         return token;
-      }
-   }
-
-   // Read next char from the buffer
-   char ch = *ptr++;
+   char ch = advance(state);
 
    // Handle single-line comments
-   if (ch == '/' && ptr < buffer + bytesRead && *ptr == '/')
+   if (ch == '/' && !buffer_full(state) && current_char(state) == '/')
    {
       token.type = TOKEN_COMMENT;
       int i = 0;
       // Skip the second '/'
-      ptr++;
+      move_pointer(state, 1);
 
       while (true)
       {
          // Refill the buffer as needed
-         if (ptr >= buffer + bytesRead)
+         if (buffer_full(state))
          {
-            bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
-            ptr = buffer;
-            if (bytesRead == 0)
+            if (refill_buffer(fp, state) == 0)
                break; // EOF reached
          }
-         if (*ptr == NEWLINE_CHAR)
+
+         if (current_char(state) == NEWLINE_CHAR)
             break;
-         token.value[i++] = *ptr++;
+
+         token.value[i++] = advance(state);
          if (i >= MAX_TOKEN_LENGTH - 1)
             break;
       }
@@ -293,30 +154,28 @@ Token next_token(FILE *fp)
    }
 
    // Handle multi-line comments (/. ... ./)
-   if (ch == '/' && ptr < buffer + bytesRead && *ptr == '.')
+   if (ch == '/' && !buffer_full(state) && current_char(state) == '.')
    {
       token.type = TOKEN_COMMENT;
       int i = 0;
       // Skip the '.'
-      ptr++;
+      move_pointer(state, 1);
 
       while (true)
       {
          // Refill the buffer as needed
-         if (ptr >= buffer + bytesRead)
+         if (buffer_full(state))
          {
-            bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
-            ptr = buffer;
-            if (bytesRead == 0)
+            if (refill_buffer(fp, state) == 0)
                break; // EOF reached
          }
          // End of comment
-         if (*ptr == '.' && (ptr + 1 < buffer + bytesRead && *(ptr + 1) == '/'))
+         if (current_char(state) == '.' && (next_char_in_bounds(state) && peek(state) == '/'))
          {
-            ptr += 2; // Skip the closing "./"
+            move_pointer(state, 2); // Skip the closing "./"
             break;
          }
-         token.value[i++] = *ptr++;
+         token.value[i++] = advance(state);
          if (i >= MAX_TOKEN_LENGTH - 1)
             break;
       }
@@ -324,7 +183,7 @@ Token next_token(FILE *fp)
       return token;
    }
 
-   // Handle strings (outer quotes not included)
+   // Handle strings (outer quotes not included in token)
    if (ch == '"' || ch == '\'')
    {
       char quote = ch; // Keep quote type consistent
@@ -334,35 +193,61 @@ Token next_token(FILE *fp)
       while (true)
       {
          // Refill the buffer if needed
-         if (ptr >= buffer + bytesRead)
+         if (buffer_full(state))
          {
-            bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
-            ptr = buffer;
-            if (bytesRead == 0)
+            if (refill_buffer(fp, state) == 0)
                break; // EOF reached
          }
 
-         // Check for escape coded quotes
-         if (*ptr == '\\')
+         if (current_char(state) == '\\')
          {
-            // Increment twice to skip a "\'" or "\""
-            token.value[i++] = *ptr++;
-            if (i >= MAX_TOKEN_LENGTH - 1)
+            // Handle escape sequences
+            move_pointer(state, 1); // Skip the backslash
+            if (buffer_full(state))
+            {
+               if (refill_buffer(fp, state) == 0)
+                  break; // EOF reached
+            }
+
+            // Append the escaped character if valid
+            char escaped_char = advance(state);
+            switch (escaped_char)
+            {
+            case 'n':
+               token.value[i++] = '\n';
                break;
-            token.value[i++] = *ptr++;
+            case 't':
+               token.value[i++] = '\t';
+               break;
+            case '\\':
+               token.value[i++] = '\\';
+               break;
+            case '"':
+               token.value[i++] = '"';
+               break;
+            case '\'':
+               token.value[i++] = '\'';
+               break;
+            default:
+               // Handle invalid escape sequences by appending as-is
+               token.value[i++] = '\\';
+               token.value[i++] = escaped_char;
+               break;
+            }
+
             if (i >= MAX_TOKEN_LENGTH - 1)
                break;
          }
-         else if (*ptr != quote)
+         else if (current_char(state) != quote)
          {
-            token.value[i++] = *ptr++;
+            token.value[i++] = advance(state);
             if (i >= MAX_TOKEN_LENGTH - 1)
                break;
          }
          else
             break; // Break if we hit the end of the string
       }
-      ptr++; // Move past final quote
+      move_pointer(state, 1); // Move past final quote
       token.value[i] = '\0';
       return token;
    }
@@ -374,23 +259,22 @@ Token next_token(FILE *fp)
       int i = 0;
       token.value[i++] = ch;
 
-      while (isalnum(*ptr) || *ptr == '_')
+      while (isalnum(current_char(state)) || current_char(state) == '_')
       {
          // Refill the buffer as needed
-         if (ptr >= buffer + bytesRead)
+         if (buffer_full(state))
          {
-            bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
-            ptr = buffer;
-            if (bytesRead == 0)
+            if (refill_buffer(fp, state) == 0)
                break; // EOF reached
          }
 
-         token.value[i++] = *ptr++;
+         token.value[i++] = advance(state);
          if (i >= MAX_TOKEN_LENGTH - 1)
             break;
       }
       token.value[i] = '\0';
 
+      // TODO: USE A MAP OR SOMETHING BETTER FOR THIS
       // Check for keywords
       if (_token_matches_keyword(token, "if"))
       {
@@ -467,18 +351,16 @@ Token next_token(FILE *fp)
       int i = 0;
       token.value[i++] = ch;
 
-      while (isdigit(*ptr))
+      while (isdigit(current_char(state)))
       {
          // Refill the buffer as needed
-         if (ptr >= buffer + bytesRead)
+         if (buffer_full(state))
          {
-            bytesRead = fread(buffer, 1, BUFFER_SIZE, fp);
-            ptr = buffer;
-            if (bytesRead == 0)
+            if (refill_buffer(fp, state) == 0)
                break; // EOF reached
          }
 
-         token.value[i++] = *ptr++;
+         token.value[i++] = advance(state);
          if (i >= MAX_TOKEN_LENGTH - 1)
             break;
       }
@@ -490,7 +372,7 @@ Token next_token(FILE *fp)
    // Handle arrows
    if (ch == '-')
    {
-      char next = *ptr++;
+      char next = advance(state);
       if (next == '>')
       {
          token.type = TOKEN_ARROW;
@@ -499,12 +381,12 @@ Token next_token(FILE *fp)
          token.value[2] = '\0';
          return token;
       }
-      // If we didn't need the next char, decrement ptr
-      ptr--;
+      // If we didn't need the next char, go back
+      retreat(state);
    }
    if (ch == '=')
    {
-      char next = *ptr++;
+      char next = advance(state);
       if (next == '>')
       {
          token.type = TOKEN_DBL_ARROW;
@@ -514,17 +396,36 @@ Token next_token(FILE *fp)
          return token;
       }
       // If we didn't need the next char, decrement ptr
-      *ptr--;
+      retreat(state);
    }
 
    // Handle comparison operators
    if (ch == '=' || ch == '!' || ch == '<' || ch == '>')
    {
-      char next = *ptr++;
+      char next = advance(state);
       // '==' or '!=' or '<=' or '>='
       if (next == '=')
       {
-         token.type = TOKEN_COMPARISON_OP;
+         switch (ch)
+         {
+         case '=':
+            token.type = TOKEN_EQ;
+            break;
+         case '!':
+            token.type = TOKEN_NE;
+            break;
+         case '<':
+            token.type = TOKEN_LE;
+            break;
+         case '>':
+            token.type = TOKEN_GE;
+            break;
+
+         default:
+            fprintf(stderr, "Error: Invalid token: '%c%c'", ch, next);
+            exit(EXIT_FAILURE);
+         }
+
          token.value[0] = ch;
          token.value[1] = next;
          token.value[2] = '\0';
@@ -533,33 +434,61 @@ Token next_token(FILE *fp)
 
       // If we didn't need the next char,
       // decrement the ptr
-      *ptr--;
-      // '<' or '>'
-      if (ch == '<' || ch == '>')
+      retreat(state);
+      // '<', '>', or '='
+      switch (ch)
       {
-         token.type = TOKEN_COMPARISON_OP;
-         token.value[0] = ch;
-         token.value[1] = '\0';
-         return token;
+      case '<':
+         token.type = TOKEN_LT;
+         break;
+      case '>':
+         token.type = TOKEN_GT;
+         break;
+      case '=':
+         token.type = TOKEN_ASSIGN;
+         break;
+
+      default:
+         fprintf(stderr, "Error: Invalid operator: '%c'", ch);
+         exit(EXIT_FAILURE);
       }
-      if (ch == '=')
-      {
-         token.type = TOKEN_ASSIGNMENT;
-         token.value[0] = ch;
-         token.value[1] = '\0';
-         return token;
-      }
+
+      token.value[0] = ch;
+      token.value[1] = '\0';
+      return token;
    }
 
    // Handle in-place and regular binary operators
    // (all in-place binary operators are string of length 2)
-   if (_char_in_arr(ch, BINARY_OPERATORS, sizeof BINARY_OPERATORS))
+   if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%')
    {
-      char next = *ptr++;
+      char next = advance(state);
       // In-place binary op
-      if (ch != '=' && next == '=')
+      if (next == '=')
       {
-         token.type = TOKEN_IP_BINARY_OP;
+         switch (ch)
+         {
+         case '+':
+            token.type = TOKEN_ADD_ASSIGN;
+            break;
+         case '-':
+            token.type = TOKEN_ADD_ASSIGN;
+            break;
+         case '*':
+            token.type = TOKEN_ADD_ASSIGN;
+            break;
+         case '/':
+            token.type = TOKEN_ADD_ASSIGN;
+            break;
+         case '%':
+            token.type = TOKEN_ADD_ASSIGN;
+            break;
+
+         default:
+            fprintf(stderr, "Error: Undefined in-place binary operator token '%c%c'", ch, next);
+            exit(EXIT_FAILURE);
+         }
+
          token.value[0] = ch;
          token.value[1] = next;
          token.value[2] = '\0';
@@ -567,38 +496,38 @@ Token next_token(FILE *fp)
       }
 
       // If we didn't need the next char, decrement ptr
-      *ptr--;
+      retreat(state);
 
       // Regular binary op
       if (ch == '+')
       {
          token.type = TOKEN_ADD;
          token.value[0] = ch;
-         token.value[2] = '\0';
+         token.value[1] = '\0';
       }
       else if (ch == '-')
       {
          token.type = TOKEN_SUB;
          token.value[0] = ch;
-         token.value[2] = '\0';
+         token.value[1] = '\0';
       }
       else if (ch == '*')
       {
          token.type = TOKEN_MUL;
          token.value[0] = ch;
-         token.value[2] = '\0';
+         token.value[1] = '\0';
       }
       else if (ch == '/')
       {
          token.type = TOKEN_DIV;
          token.value[0] = ch;
-         token.value[2] = '\0';
+         token.value[1] = '\0';
       }
       else // if (ch == '%')
       {
          token.type = TOKEN_MOD;
          token.value[0] = ch;
-         token.value[2] = '\0';
+         token.value[1] = '\0';
       }
 
       return token;
@@ -616,21 +545,6 @@ Token next_token(FILE *fp)
    if (ch == ',')
    {
       token.type = TOKEN_COMMA;
-      token.value[0] = ch;
-      token.value[1] = '\0';
-      return token;
-   }
-
-   if (ch == '<')
-   {
-      token.type = TOKEN_LT_ARROW_BRACK;
-      token.value[0] = ch;
-      token.value[1] = '\0';
-      return token;
-   }
-   if (ch == '>')
-   {
-      token.type = TOKEN_RT_ARROW_BRACK;
       token.value[0] = ch;
       token.value[1] = '\0';
       return token;
@@ -693,73 +607,4 @@ Token next_token(FILE *fp)
    token.value[0] = ch;
    token.value[1] = '\0';
    return token;
-}
-
-/**
- * @brief Print a representation of a token.
- *
- * @param token Token to print
- */
-void print_token(Token token)
-{
-   static const char *token_types[] = {
-       // Make sure these align with the defined token
-       // types in TokenType from tokenizer.h
-
-       // Make these have equal length for readability
-       "TOKEN_IF            ",
-       "TOKEN_ELSE          ",
-       "TOKEN_WHILE         ",
-       "TOKEN_FOR           ",
-       "TOKEN_FN            ",
-       "TOKEN_CLASS         ",
-       "TOKEN_IMPORT        ",
-       "TOKEN_FROM          ",
-       "TOKEN_EXPORT        ",
-       "TOKEN_MODULE        ",
-       "TOKEN_AND           ",
-       "TOKEN_OR            ",
-       "TOKEN_NOT           ",
-       "TOKEN_IN            ",
-       "TOKEN_EXTENDS       ",
-
-       "TOKEN_COMMENT       ",
-       "TOKEN_IDENTIFIER    ",
-       "TOKEN_NUMBER        ",
-       "TOKEN_ASSIGNMENT    ",
-       "TOKEN_ADD           ",
-       "TOKEN_SUB           ",
-       "TOKEN_MUL           ",
-       "TOKEN_DIV           ",
-       "TOKEN_MOD           ",
-       "TOKEN_LT_ARROW_BRACK",
-       "TOKEN_RT_ARROW_BRACK",
-       "TOKEN_IP_BINARY_OP  ",
-       "TOKEN_COMPARISON_OP ",
-       "TOKEN_LOGIC_OP      ",
-       "TOKEN_STRING        ",
-       "TOKEN_LT_PAREN      ",
-       "TOKEN_RT_PAREN      ",
-       "TOKEN_LT_BRACK      ",
-       "TOKEN_RT_BRACK      ",
-       "TOKEN_LT_CURLY      ",
-       "TOKEN_RT_CURLY      ",
-       "TOKEN_DOT           ",
-       "TOKEN_COMMA         ",
-       "TOKEN_ARROW         ",
-       "TOKEN_DBL_ARROW     ",
-       "TOKEN_NEWLINE       ",
-       "TOKEN_EOF           ",
-       "TOKEN_INVALID       "};
-
-   // Newline representation is "\\n"
-   // (to prevent gaps in output)
-   if (token.value[0] == '\n')
-   {
-      printf("%s: '%s'\n", token_types[token.type], "\\n");
-   }
-   else
-   {
-      printf("%s: '%s'\n", token_types[token.type], token.value);
-   }
 }

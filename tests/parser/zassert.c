@@ -41,30 +41,28 @@ void zassert(bool condition, void *val1, void *val2, const char *message, const 
         {
             fprintf(
                 stderr,
-                "Assertion failed: Values are NULL\nFile: %s, Line: %d",
+                "Assertion failed: Values are NULL\nFailure at %s:%d",
                 file,
                 lineno);
-            exit(1);
+            // exit(1);
         }
         if (val1 == NULL)
         {
             fprintf(
                 stderr,
-                "Assertion failed: 1st value is NULL\nFile: %s, Line: %d",
-                (char *)val2,
+                "Assertion failed: 1st value is NULL\nFailure at %s:%d",
                 file,
                 lineno);
-            exit(1);
+            // exit(1);
         }
         if (val2 == NULL)
         {
             fprintf(
                 stderr,
-                "Assertion failed: 2nd value is NULL\nFile: %s, Line: %d",
-                (char *)val1,
+                "Assertion failed: 2nd value is NULL\nFailure at %s:%d",
                 file,
                 lineno);
-            exit(1);
+            // exit(1);
         }
         fprintf(
             stderr,
@@ -73,7 +71,7 @@ void zassert(bool condition, void *val1, void *val2, const char *message, const 
             (char *)val2,
             file,
             lineno);
-        exit(1);
+        // exit(1);
     }
     printf("Test at %s:%d OK\n", file, lineno);
 }

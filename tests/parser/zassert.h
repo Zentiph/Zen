@@ -23,8 +23,8 @@
 
 #include <stdbool.h>
 
-const char *ASSERT_EQ_MSG = "Assertion failed: '%s' != '%s'\nFile: %s, Line: %d";
-const char *ASSERT_NEQ_MSG = "Assertion failed: '%s' == '%s'\nFile: %s, Line: %d";
+const char *ASSERT_EQ_MSG = "Assertion failed: '%s' != '%s'\nFailure at: %s:%d";
+const char *ASSERT_NEQ_MSG = "Assertion failed: '%s' == '%s'\nFailure at: %s:%d";
 
 /**
  * @brief A modified assert function that prints a better output

@@ -15,89 +15,89 @@
 (* along with this program.  If not, see <https://www.gnu.org/licenses/>. *)
 
 
-program         = { statement } ;
+program         ::= { statement } ;
 
-statement       = var_decl
-                | assignment
-                | if_stmt
-                | while_stmt
-                | for_stmt
-                | func_decl
-                | func_call
-                | class_decl
-                | expression_stmt
-                | comment
-                | import_stmt
-                | module_decl
-                | export_stmt ;
+statement       ::= var_decl
+                  | assignment
+                  | if_stmt
+                  | while_stmt
+                  | for_stmt
+                  | func_decl
+                  | func_call
+                  | class_decl
+                  | expression_stmt
+                  | comment
+                  | import_stmt
+                  | module_decl
+                  | export_stmt ;
 
 (* Variable declaration and assignment *)
 (* A variable declaration can have an assignment or not *)
-var_decl        = type , identifier , ["=" , expression] ;
-assignment      = identifier , assignment_op , expression ;
-assignment_op   = "=" | "+=" | "-=" | "*=" | "/=" | "%=" ;
+var_decl        ::= type , identifier , ["=" , expression] ;
+assignment      ::= identifier , assignment_op , expression ;
+assignment_op   ::= "=" | "+=" | "-=" | "*=" | "/=" | "%=" ;
 
 (* Control flow *)
-if_stmt         = "if" , expression , block , { "else" , block } ;
-while_stmt      = "while" , expression , block ;
-for_stmt        = "for" , type , identifier , "in" , expression , block ;
+if_stmt         ::= "if" , expression , block , { "else" , block } ;
+while_stmt      ::= "while" , expression , block ;
+for_stmt        ::= "for" , type , identifier , "in" , expression , block ;
 
 (* Functions *)
-func_decl       = "fn" , identifier , "(" , [ param_list ] , ")" , [ "->" , type ] , block ;
-func_call       = identifier , "(" [ expression , { "," expression } ] ")"
-param_list      = { param , { "," , param} } { "," default_param } ;
-param           = type , identifier ;
-default_param   = param , "=" , expression ;
+func_decl       ::= "fn" , identifier , "(" , [ param_list ] , ")" , [ "->" , type ] , block ;
+func_call       ::= identifier , "(" [ expression , { "," expression } ] ")"
+param_list      ::= { param , { "," , param} } { "," default_param } ;
+param           ::= type , identifier ;
+default_param   ::= param , "=" , expression ;
 
 (* Classes *)
-class_decl      = "class" , identifier , [ "<" , type , ">" ] , [ "extends" , identifier ] , block ;
+class_decl      ::= "class" , identifier , [ "<" , type , ">" ] , [ "extends" , identifier ] , block ;
 
 (* Blocks and statements *)
-block           = "{" , { statement } , "}" ;
-expression_stmt = expression , end_of_line ;
-end_of_line     = "\n" | ";" ;
+block           ::= "{" , { statement } , "}" ;
+expression_stmt ::= expression , end_of_line ;
+end_of_line     ::= "\n" | ";" ;
 
 (* Imports *)
-import_stmt     = "import" , identifier , { "," , identifier } , [ "from" , identifier ] ;
+import_stmt     ::= "import" , identifier , { "," , identifier } , [ "from" , identifier ] ;
 
 (* Modules *)
-module_decl     = "module" , identifier ;
-export_stmt     = "export" , identifier , { "," , identifier } ;
+module_decl     ::= "module" , identifier ;
+export_stmt     ::= "export" , identifier , { "," , identifier } ;
 
 (* Expressions (using standard operator precedence) *)
-expression      = logical_expr ;
-logical_expr    = relational_expr ,
+expression      ::= logical_expr ;
+logical_expr    ::= relational_expr ,
                   { ( "and" | "or" ) , relational_expr } ;
-relational_expr = additive_expr ,
+relational_expr ::= additive_expr ,
                   { ( ">" | "<" | ">=" | "<=" | "==" | "!=" ) , additive_expr }
-additive_expr   = multiplicative_expr ,
+additive_expr   ::= multiplicative_expr ,
                   { ( "+" | "-" ) , multiplicative_expr } ;
-multiplicative_expr = unary_expr ,
+multiplicative_expr ::= unary_expr ,
                   { ( "*" | "/" | "%" ) , unary_expr } ;
-unary_expr      = [ ( "not" | "-" ) ] , primary_expr ;
-primary_expr    = number | identifier | string_literal | "(" , expression , ")" ;
+unary_expr      ::= [ ( "not" | "-" ) ] , primary_expr ;
+primary_expr    ::= number | identifier | string_literal | "(" , expression , ")" ;
 
 (* Types *)
-type            = identifier , [ "<" , type_list , ">" ] ;
-type_list       = type , { "," , type } ;
+type            ::= identifier , [ "<" , type_list , ">" ] ;
+type_list       ::= type , { "," , type } ;
 
 (* Lexical rules *)
-identifier      = letter | "_" ,
+identifier      ::= letter | "_" ,
                   { letter | digit | "_" } ;
-number          = digit , { digit } , [ "." , digit , { digit } ] ;
-string_literal  = "\"" , { character } "\"" | "'" , { character } "'" ;
+number          ::= digit , { digit } , [ "." , digit , { digit } ] ;
+string_literal  ::= "\"" , { character } "\"" | "'" , { character } "'" ;
 
-comment         = single_line_comment | multi_line_comment ;
-single_line_comment = "//" , { any_character - newline } , newline ;
-double_line_comment = "/." , { any_character } , "./" ;
+comment         ::= single_line_comment | multi_line_comment ;
+single_line_comment ::= "//" , { any_character - newline } , newline ;
+double_line_comment ::= "/." , { any_character } , "./" ;
 
-letter          = "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" |
-                  "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" |
-                  "U" | "V" | "W" | "X" | "Y" | "Z" |
-                  "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" |
-                  "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" |
-                  "u" | "v" | "w" | "x" | "y" | "z" ;
-digit           = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
-character       = ? any valid character ?
-any_character   = ? any valid character ?
-newline         = "\n"
+letter          ::= "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" |
+                    "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" |
+                    "U" | "V" | "W" | "X" | "Y" | "Z" |
+                    "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" |
+                    "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" |
+                    "u" | "v" | "w" | "x" | "y" | "z" ;
+digit           ::= "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+character       ::= ? any valid character ?
+any_character   ::= ? any valid character ?
+newline         ::= "\n"

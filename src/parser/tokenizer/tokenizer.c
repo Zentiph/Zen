@@ -24,8 +24,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "state.h"
 #include "tokenizer.h"
+
+#include "state.h"
 
 /**
  * @brief Representation of a keyword token.
@@ -36,6 +37,7 @@ typedef struct
    TokenType type;
 } Keyword;
 
+/** A table of keywords mapped to their corresponding tokens. */
 static const Keyword keyword_table[] = {
     {"if", TOKEN_IF},
     {"else", TOKEN_ELSE},
@@ -60,22 +62,21 @@ static const Keyword keyword_table[] = {
  *        Newline characters as well as semicolons
  *        are valid whitespace, so track those.
  *
- * @param fp    File pointer
- * @param state Tokenizer state
+ * @param tokenizer Tokenizer
  */
-void skip_whitespace(FILE *fp, TokenizerState *state)
+void skip_whitespace(Tokenizer *tokenizer)
 {
    while (true)
    {
-      if (buffer_full(state))
+      if (buffer_full(tokenizer))
       {
-         if (refill_buffer(fp, state) == 0)
+         if (refill_buffer(tokenizer) == 0)
          { // EOF reached
             break;
          }
       }
 
-      char ch = current_char(state);
+      char ch = current_char(tokenizer);
       if (isspace(ch))
       {
          if (ch == NEWLINE_CHAR)
@@ -86,15 +87,15 @@ void skip_whitespace(FILE *fp, TokenizerState *state)
          // Otherwise skip the whitespace
          while (isspace(ch) && ch != NEWLINE_CHAR)
          {
-            move_pointer(state, 1);
-            if (buffer_full(state))
+            move_pointer(tokenizer, 1);
+            if (buffer_full(tokenizer))
             {
-               if (refill_buffer(fp, state) == 0)
+               if (refill_buffer(tokenizer) == 0)
                { // EOF reached
                   break;
                }
             }
-            ch = current_char(state);
+            ch = current_char(tokenizer);
          }
       }
       else
@@ -107,58 +108,57 @@ void skip_whitespace(FILE *fp, TokenizerState *state)
 /**
  * @brief Get the next token in the file.
  *
- * @param fp       File pointer
- * @param state    Tokenizer state
- * @return Token - The token found
+ * @param tokenizer Tokenizer
+ * @return Token  - The token found
  */
-Token next_token(FILE *fp, TokenizerState *state)
+Token next_token(Tokenizer *tokenizer)
 {
    Token token;
    token.value[0] = '\0'; // Reset token value
 
-   if (buffer_full(state))
+   if (buffer_full(tokenizer))
    {
-      if (refill_buffer(fp, state) == 0)
+      if (refill_buffer(tokenizer) == 0)
       { // No new data read, reached EOF
          token.type = TOKEN_EOF;
          return token;
       }
    }
 
-   skip_whitespace(fp, state);
+   skip_whitespace(tokenizer);
 
-   if (buffer_full(state))
+   if (buffer_full(tokenizer))
    {
-      if (refill_buffer(fp, state) == 0)
+      if (refill_buffer(tokenizer) == 0)
       {
          token.type = TOKEN_EOF;
          return token;
       }
    }
 
-   char ch = advance(state);
+   char ch = advance(tokenizer);
 
    // Handle single-line comments
-   if (ch == '/' && !buffer_full(state) && current_char(state) == '/')
+   if (ch == '/' && !buffer_full(tokenizer) && current_char(tokenizer) == '/')
    {
       token.type = TOKEN_COMMENT;
       int i = 0;
       // Skip the second '/'
-      move_pointer(state, 1);
+      move_pointer(tokenizer, 1);
 
       while (true)
       {
          // Refill the buffer as needed
-         if (buffer_full(state))
+         if (buffer_full(tokenizer))
          {
-            if (refill_buffer(fp, state) == 0)
+            if (refill_buffer(tokenizer) == 0)
                break; // EOF reached
          }
 
-         if (current_char(state) == NEWLINE_CHAR)
+         if (current_char(tokenizer) == NEWLINE_CHAR)
             break;
 
-         token.value[i++] = advance(state);
+         token.value[i++] = advance(tokenizer);
          if (i >= MAX_TOKEN_LENGTH - 1)
             break;
       }
@@ -168,28 +168,28 @@ Token next_token(FILE *fp, TokenizerState *state)
    }
 
    // Handle multi-line comments (/. ... ./)
-   if (ch == '/' && !buffer_full(state) && current_char(state) == '.')
+   if (ch == '/' && !buffer_full(tokenizer) && current_char(tokenizer) == '.')
    {
       token.type = TOKEN_COMMENT;
       int i = 0;
       // Skip the '.'
-      move_pointer(state, 1);
+      move_pointer(tokenizer, 1);
 
       while (true)
       {
          // Refill the buffer as needed
-         if (buffer_full(state))
+         if (buffer_full(tokenizer))
          {
-            if (refill_buffer(fp, state) == 0)
+            if (refill_buffer(tokenizer) == 0)
                break; // EOF reached
          }
          // End of comment
-         if (current_char(state) == '.' && (next_char_in_bounds(state) && peek(state) == '/'))
+         if (current_char(tokenizer) == '.' && (next_char_in_bounds(tokenizer) && peek(tokenizer) == '/'))
          {
-            move_pointer(state, 2); // Skip the closing "./"
+            move_pointer(tokenizer, 2); // Skip the closing "./"
             break;
          }
-         token.value[i++] = advance(state);
+         token.value[i++] = advance(tokenizer);
          if (i >= MAX_TOKEN_LENGTH - 1)
             break;
       }
@@ -207,24 +207,24 @@ Token next_token(FILE *fp, TokenizerState *state)
       while (true)
       {
          // Refill the buffer if needed
-         if (buffer_full(state))
+         if (buffer_full(tokenizer))
          {
-            if (refill_buffer(fp, state) == 0)
+            if (refill_buffer(tokenizer) == 0)
                break; // EOF reached
          }
 
-         if (current_char(state) == '\\')
+         if (current_char(tokenizer) == '\\')
          {
             // Handle escape sequences
-            move_pointer(state, 1); // Skip the backslash
-            if (buffer_full(state))
+            move_pointer(tokenizer, 1); // Skip the backslash
+            if (buffer_full(tokenizer))
             {
-               if (refill_buffer(fp, state) == 0)
+               if (refill_buffer(tokenizer) == 0)
                   break; // EOF reached
             }
 
             // Append the escaped character if valid
-            char escaped_char = advance(state);
+            char escaped_char = advance(tokenizer);
             switch (escaped_char)
             {
             case 'n':
@@ -252,16 +252,16 @@ Token next_token(FILE *fp, TokenizerState *state)
             if (i >= MAX_TOKEN_LENGTH - 1)
                break;
          }
-         else if (current_char(state) != quote)
+         else if (current_char(tokenizer) != quote)
          {
-            token.value[i++] = advance(state);
+            token.value[i++] = advance(tokenizer);
             if (i >= MAX_TOKEN_LENGTH - 1)
                break;
          }
          else
             break; // Break if we hit the end of the string
       }
-      move_pointer(state, 1); // Move past final quote
+      move_pointer(tokenizer, 1); // Move past final quote
       token.value[i] = '\0';
       return token;
    }
@@ -273,16 +273,16 @@ Token next_token(FILE *fp, TokenizerState *state)
       int i = 0;
       token.value[i++] = ch;
 
-      while (isalnum(current_char(state)) || current_char(state) == '_')
+      while (isalnum(current_char(tokenizer)) || current_char(tokenizer) == '_')
       {
          // Refill the buffer as needed
-         if (buffer_full(state))
+         if (buffer_full(tokenizer))
          {
-            if (refill_buffer(fp, state) == 0)
+            if (refill_buffer(tokenizer) == 0)
                break; // EOF reached
          }
 
-         token.value[i++] = advance(state);
+         token.value[i++] = advance(tokenizer);
          if (i >= MAX_TOKEN_LENGTH - 1)
             break;
       }
@@ -309,16 +309,16 @@ Token next_token(FILE *fp, TokenizerState *state)
       int i = 0;
       token.value[i++] = ch;
 
-      while (isdigit(current_char(state)))
+      while (isdigit(current_char(tokenizer)))
       {
          // Refill the buffer as needed
-         if (buffer_full(state))
+         if (buffer_full(tokenizer))
          {
-            if (refill_buffer(fp, state) == 0)
+            if (refill_buffer(tokenizer) == 0)
                break; // EOF reached
          }
 
-         token.value[i++] = advance(state);
+         token.value[i++] = advance(tokenizer);
          if (i >= MAX_TOKEN_LENGTH - 1)
             break;
       }
@@ -330,7 +330,7 @@ Token next_token(FILE *fp, TokenizerState *state)
    // Handle arrows
    if (ch == '-')
    {
-      char next = advance(state);
+      char next = advance(tokenizer);
       if (next == '>')
       {
          token.type = TOKEN_ARROW;
@@ -340,11 +340,11 @@ Token next_token(FILE *fp, TokenizerState *state)
          return token;
       }
       // If we didn't need the next char, go back
-      move_pointer(state, -1);
+      move_pointer(tokenizer, -1);
    }
    if (ch == '=')
    {
-      char next = advance(state);
+      char next = advance(tokenizer);
       if (next == '>')
       {
          token.type = TOKEN_DBL_ARROW;
@@ -354,13 +354,13 @@ Token next_token(FILE *fp, TokenizerState *state)
          return token;
       }
       // If we didn't need the next char, decrement ptr
-      move_pointer(state, -1);
+      move_pointer(tokenizer, -1);
    }
 
    // Handle comparison operators
    if (ch == '=' || ch == '!' || ch == '<' || ch == '>')
    {
-      char next = advance(state);
+      char next = advance(tokenizer);
       // '==' or '!=' or '<=' or '>='
       if (next == '=')
       {
@@ -392,7 +392,7 @@ Token next_token(FILE *fp, TokenizerState *state)
 
       // If we didn't need the next char,
       // decrement the ptr
-      move_pointer(state, -1);
+      move_pointer(tokenizer, -1);
       // '<', '>', or '='
       switch (ch)
       {
@@ -420,7 +420,7 @@ Token next_token(FILE *fp, TokenizerState *state)
    // (all in-place binary operators are string of length 2)
    if (ch == '+' || ch == '-' || ch == '*' || ch == '/' || ch == '%')
    {
-      char next = advance(state);
+      char next = advance(tokenizer);
       // In-place binary op
       if (next == '=')
       {
@@ -454,7 +454,7 @@ Token next_token(FILE *fp, TokenizerState *state)
       }
 
       // If we didn't need the next char, decrement ptr
-      move_pointer(state, -1);
+      move_pointer(tokenizer, -1);
 
       // Regular binary op
       if (ch == '+')

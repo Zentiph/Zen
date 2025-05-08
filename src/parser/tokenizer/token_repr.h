@@ -21,6 +21,8 @@
 #ifndef TOKEN_REPR_H
 #define TOKEN_REPR_H
 
+#include "tokenizer.h"
+
 /**
  * @brief Convert a TokenType to a string.
  *

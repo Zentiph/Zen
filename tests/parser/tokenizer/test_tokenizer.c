@@ -30,43 +30,41 @@
 #include "../../../src/parser/tokenizer/tokenizer.h"
 #include "../../../src/parser/tokenizer/token_repr.h"
 
-TokenizerState *ts;
-
 /**
  * @brief Test the skip_whitespace function,
  *        asserting that the next character is the expected character.
  *
- * @param fp       File pointer
- * @param expected Expected character after skipping whitespace
- * @param file     File the of the assertion
- * @param lineno   Line number of the assertion
+ * @param tokenizer Tokenizer
+ * @param expected  Expected character after skipping whitespace
+ * @param file      File the of the assertion
+ * @param lineno    Line number of the assertion
  */
-void test_skip_whitespace(FILE *fp, const char expected, const char *file, int lineno)
+void test_skip_whitespace(Tokenizer *tokenizer, const char expected, const char *file, int lineno)
 {
-    zassert(fp != NULL, fp, NULL, ASSERT_NEQ_MSG, file, lineno);
+    zassert(tokenizer != NULL, tokenizer, NULL, ASSERT_NEQ_MSG, file, lineno);
 
-    skip_whitespace(fp, ts);
+    skip_whitespace(tokenizer);
 
     // Convert the chars to strings for printing
-    char actualCh[2] = {current_char(ts), '\0'};
+    char actualCh[2] = {current_char(tokenizer), '\0'};
     char expectedCh[2] = {expected, '\0'};
-    zassert(current_char(ts) == expected, actualCh, expectedCh, ASSERT_EQ_MSG, file, lineno);
+    zassert(current_char(tokenizer) == expected, actualCh, expectedCh, ASSERT_EQ_MSG, file, lineno);
 }
 
 /**
  * @brief Test the next_token function,
  *        asserting that the next token is the expected token
  *
- * @param fp       File pointer
- * @param expected Expected character after skipping whitespace
- * @param file     File the of the assertion
- * @param lineno   Line number of the assertion
+ * @param tokenizer Tokenizer
+ * @param expected  Expected character after skipping whitespace
+ * @param file      File the of the assertion
+ * @param lineno    Line number of the assertion
  */
-void test_next_token(FILE *fp, Token expected, const char *file, int lineno)
+void test_next_token(Tokenizer *tokenizer, Token expected, const char *file, int lineno)
 {
-    zassert(fp != NULL, fp, NULL, ASSERT_NEQ_MSG, file, lineno);
+    zassert(tokenizer != NULL, tokenizer, NULL, ASSERT_NEQ_MSG, file, lineno);
 
-    Token token = next_token(fp, ts);
+    Token token = next_token(tokenizer);
 
     if (token.value != NULL && expected.value != NULL)
     {
@@ -105,14 +103,12 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    ts = malloc(sizeof(TokenizerState));
-    if (!ts)
+    Tokenizer *tokenizer = malloc(sizeof(Tokenizer));
+    if (!tokenizer)
     {
-        fprintf(stderr, "Error: Failed to allocate memory for TokenizerState.\n");
+        fprintf(stderr, "Error: Failed to allocate memory for Tokenizer.\n");
         return 1;
     }
-
-    initialize_tokenizer_state(ts);
 
     // Source file given, run given file
     if (argc == 2)
@@ -123,7 +119,7 @@ int main(int argc, char const *argv[])
         if (strcmp(argv[1] + fileLen - suffixLen, ".zen") != 0)
         {
             fprintf(stderr, "tokenizer source input must be a .zen file");
-            free(ts);
+            free(tokenizer);
             return 1;
         }
 
@@ -131,19 +127,21 @@ int main(int argc, char const *argv[])
         if (!fp)
         {
             perror("Unable to open file");
-            free(ts);
+            free(tokenizer);
             return 1;
         }
 
+        initialize_tokenizer(tokenizer, fp);
+
         Token token;
-        while ((token = next_token(fp, ts)).type != TOKEN_EOF)
+        while ((token = next_token(tokenizer)).type != TOKEN_EOF)
         {
             print_token(token);
         }
         print_token(token); // Print EOF
 
         fclose(fp);
-        free(ts);
+        free(tokenizer);
         return 0;
     }
 
@@ -158,35 +156,36 @@ int main(int argc, char const *argv[])
     if (!fp)
     {
         perror("Unable to open file");
-        free(ts);
+        free(tokenizer);
         return 1;
     }
 
-    test_skip_whitespace(fp, 'i', __FILE__, __LINE__);
-    move_pointer(ts, strlen("int")); // Skip the rest of the word "int"
-    test_skip_whitespace(fp, 'x', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, '=', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, '5', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, 'p', __FILE__, __LINE__);
+    initialize_tokenizer(tokenizer, fp);
 
-    rewind(fp);
-    initialize_tokenizer_state(ts); // Reset tokenizer
+    test_skip_whitespace(tokenizer, 'i', __FILE__, __LINE__);
+    move_pointer(tokenizer, strlen("int")); // Skip the rest of the word "int"
+    test_skip_whitespace(tokenizer, 'x', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, '=', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, '5', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, '\n', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, 'p', __FILE__, __LINE__);
 
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "int"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "x"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_ASSIGN, "="}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_NUMBER, "5"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "print"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_LT_PAREN, "("}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "x"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_RT_PAREN, ")"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_EOF, ""}, __FILE__, __LINE__);
+    initialize_tokenizer(tokenizer, fp); // Reset tokenizer and file
+
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "int"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "x"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_ASSIGN, "="}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_NUMBER, "5"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "print"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_LT_PAREN, "("}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "x"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_RT_PAREN, ")"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_EOF, ""}, __FILE__, __LINE__);
 
     fclose(fp);
 
@@ -195,87 +194,86 @@ int main(int argc, char const *argv[])
      *                                 in2.zen                                 *
      ***************************************************************************/
 
-    initialize_tokenizer_state(ts); // Reset tokenizer
-
     fp = fopen("tests/parser/input/in2.zen", "r");
     if (!fp)
     {
         perror("Unable to open file");
-        free(ts);
+        free(tokenizer);
         return 1;
     }
 
-    test_skip_whitespace(fp, 's', __FILE__, __LINE__);
-    move_pointer(ts, strlen("string"));
-    test_skip_whitespace(fp, 'g', __FILE__, __LINE__);
-    move_pointer(ts, strlen("greeting"));
-    test_skip_whitespace(fp, '=', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, '"', __FILE__, __LINE__);
-    move_pointer(ts, strlen("\"Hello, world!\""));
-    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, 'i', __FILE__, __LINE__);
-    move_pointer(ts, strlen("if"));
-    test_skip_whitespace(fp, 'g', __FILE__, __LINE__);
-    move_pointer(ts, strlen("greeting.length"));
-    test_skip_whitespace(fp, '>', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, '4', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, '{', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, 'p', __FILE__, __LINE__);
-    move_pointer(ts, strlen("print(greeting)"));
-    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, '}', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, 'e', __FILE__, __LINE__);
-    move_pointer(ts, strlen("else"));
-    test_skip_whitespace(fp, '{', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, 'p', __FILE__, __LINE__);
-    move_pointer(ts, strlen("print(\"Greeting too short.\")"));
-    test_skip_whitespace(fp, '\n', __FILE__, __LINE__);
-    move_pointer(ts, 1);
-    test_skip_whitespace(fp, '}', __FILE__, __LINE__);
+    initialize_tokenizer(tokenizer, fp); // Reset tokenizer and file
 
-    rewind(fp);
-    initialize_tokenizer_state(ts); // Reset tokenizer
+    test_skip_whitespace(tokenizer, 's', __FILE__, __LINE__);
+    move_pointer(tokenizer, strlen("string"));
+    test_skip_whitespace(tokenizer, 'g', __FILE__, __LINE__);
+    move_pointer(tokenizer, strlen("greeting"));
+    test_skip_whitespace(tokenizer, '=', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, '"', __FILE__, __LINE__);
+    move_pointer(tokenizer, strlen("\"Hello, world!\""));
+    test_skip_whitespace(tokenizer, '\n', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, 'i', __FILE__, __LINE__);
+    move_pointer(tokenizer, strlen("if"));
+    test_skip_whitespace(tokenizer, 'g', __FILE__, __LINE__);
+    move_pointer(tokenizer, strlen("greeting.length"));
+    test_skip_whitespace(tokenizer, '>', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, '4', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, '{', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, '\n', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, 'p', __FILE__, __LINE__);
+    move_pointer(tokenizer, strlen("print(greeting)"));
+    test_skip_whitespace(tokenizer, '\n', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, '}', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, 'e', __FILE__, __LINE__);
+    move_pointer(tokenizer, strlen("else"));
+    test_skip_whitespace(tokenizer, '{', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, '\n', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, 'p', __FILE__, __LINE__);
+    move_pointer(tokenizer, strlen("print(\"Greeting too short.\")"));
+    test_skip_whitespace(tokenizer, '\n', __FILE__, __LINE__);
+    move_pointer(tokenizer, 1);
+    test_skip_whitespace(tokenizer, '}', __FILE__, __LINE__);
 
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "string"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_ASSIGN, "="}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_STRING, "Hello, world!"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IF, "if"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_DOT, "."}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "length"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_GT, ">"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_NUMBER, "4"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_LT_CURLY, "{"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "print"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_LT_PAREN, "("}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_RT_PAREN, ")"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_RT_CURLY, "}"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_ELSE, "else"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_LT_CURLY, "{"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_IDENTIFIER, "print"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_LT_PAREN, "("}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_STRING, "Greeting too short."}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_RT_PAREN, ")"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
-    test_next_token(fp, (Token){TOKEN_RT_CURLY, "}"}, __FILE__, __LINE__);
+    initialize_tokenizer(tokenizer, fp); // Reset tokenizer and file
+
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "string"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_ASSIGN, "="}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_STRING, "Hello, world!"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_IF, "if"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_DOT, "."}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "length"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_GT, ">"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_NUMBER, "4"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_LT_CURLY, "{"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "print"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_LT_PAREN, "("}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_RT_PAREN, ")"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_RT_CURLY, "}"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_ELSE, "else"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_LT_CURLY, "{"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "print"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_LT_PAREN, "("}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_STRING, "Greeting too short."}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_RT_PAREN, ")"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_NEWLINE, "\n"}, __FILE__, __LINE__);
+    test_next_token(tokenizer, (Token){TOKEN_RT_CURLY, "}"}, __FILE__, __LINE__);
 
     /***************************************************************************
      *                                 TESTING                                 *
@@ -283,7 +281,7 @@ int main(int argc, char const *argv[])
      ***************************************************************************/
 
     fclose(fp);
-    free(ts);
+    free(tokenizer);
 
     printf("All tests passed\n");
     return 0;

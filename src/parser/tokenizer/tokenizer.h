@@ -119,18 +119,16 @@ typedef struct
  *        Newline characters as well as semicolons
  *        are valid whitespace, so track those.
  *
- * @param fp    File pointer
- * @param state Tokenizer state
+ * @param tokenizer Tokenizer
  */
-void skip_whitespace(FILE *fp, TokenizerState *state);
+void skip_whitespace(Tokenizer *tokenizer);
 
 /**
  * @brief Get the next token in the file.
  *
- * @param fp       File pointer
- * @param state    Tokenizer state
- * @return Token - The token found
+ * @param tokenizer Tokenizer
+ * @return Token  - The token found
  */
-Token next_token(FILE *fp, TokenizerState *state);
+Token next_token(Tokenizer *tokenizer);
 
 #endif // TOKENIZER_H

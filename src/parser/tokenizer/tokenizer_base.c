@@ -1,5 +1,5 @@
 /**
- * @file state.c
+ * @file parser/tokenizer/tokenizer_base.c
  * @author Gavin Borne
  * @brief Tokenizer state and helper functions for the Zen programming language
  * @copyright Copyright (C) 2025  Gavin Borne
@@ -20,9 +20,10 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include "state.h"
+#include "tokenizer_base.h"
 
 /**
  * @brief Determine if the current tokenizer's buffer is full.
@@ -118,15 +119,30 @@ void move_pointer(Tokenizer *tokenizer, int amount)
 }
 
 /**
- * @brief Initialize the tokenizer.
- *        This function an be used on an existing
- *        tokenizer to reset it with a new file
+ * @brief Create a tokenizer object.
+ *
+ * @param fp            File pointer
+ * @return Tokenizer* - Tokenizer object
+ */
+Tokenizer *create_tokenizer(FILE *fp)
+{
+   Tokenizer *tokenizer = malloc(sizeof(Tokenizer));
+   tokenizer->fp = fp;
+   tokenizer->ptr = tokenizer->buffer;
+   tokenizer->bytesRead = 0;
+   tokenizer->line = 1;
+   tokenizer->column = 1;
+   return tokenizer;
+}
+
+/**
+ * @brief Reset the tokenizer with a new file,
  *        or rewind the existing file.
  *
  * @param tokenizer Tokenizer
  * @param fp        File pointer
  */
-void initialize_tokenizer(Tokenizer *tokenizer, FILE *fp)
+void reset_tokenizer(Tokenizer *tokenizer, FILE *fp)
 {
    rewind(fp);
    tokenizer->fp = fp;

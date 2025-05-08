@@ -1,5 +1,5 @@
 /**
- * @file state.h
+ * @file parser/tokenizer/tokenizer_base.h
  * @author Gavin Borne
  * @brief Tokenizer state and helper functions header for the Zen programming language
  * @copyright Copyright (C) 2025  Gavin Borne
@@ -20,8 +20,8 @@
 
 // TODO: ORGANIZE ORDER OF FUNCS IN ALL FILES
 
-#ifndef STATE_H
-#define STATE_H
+#ifndef TOKENIZER_BASE_H
+#define TOKENIZER_BASE_H
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -113,15 +113,21 @@ bool next_char_in_bounds(Tokenizer *tokenizer);
 void move_pointer(Tokenizer *tokenizer, int amount);
 
 /**
- * @brief Initialize the tokenizer.
- *        This function an be used on an existing
- *        tokenizer to reset it with a new file
+ * @brief Create a tokenizer object.
+ *
+ * @param fp            File pointer
+ * @return Tokenizer* - Tokenizer object
+ */
+Tokenizer *create_tokenizer(FILE *fp);
+
+/**
+ * @brief Reset the tokenizer with a new file,
  *        or rewind the existing file.
  *
  * @param tokenizer Tokenizer
  * @param fp        File pointer
  */
-void initialize_tokenizer(Tokenizer *tokenizer, FILE *fp);
+void reset_tokenizer(Tokenizer *tokenizer, FILE *fp);
 
 /**
  * @brief Save a tokenizer's state to a snapshot.
@@ -139,4 +145,4 @@ void save_tokenizer_state(Tokenizer *tokenizer, TokenizerSnapshot *snapshot);
  */
 void load_tokenizer_state(Tokenizer *tokenizer, const TokenizerSnapshot *snapshot);
 
-#endif // STATE_H
+#endif // TOKENIZER_BASE_H

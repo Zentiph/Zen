@@ -1,5 +1,5 @@
 /**
- * @file token_repr.c
+ * @file parser/tokenizer/token_repr.c
  * @author Gavin Borne
  * @brief Representation for tokens for the Zen programming language
  * @copyright Copyright (C) 2025  Gavin Borne

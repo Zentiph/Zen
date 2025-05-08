@@ -103,13 +103,6 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    Tokenizer *tokenizer = malloc(sizeof(Tokenizer));
-    if (!tokenizer)
-    {
-        fprintf(stderr, "Error: Failed to allocate memory for Tokenizer.\n");
-        return 1;
-    }
-
     // Source file given, run given file
     if (argc == 2)
     {
@@ -119,7 +112,6 @@ int main(int argc, char const *argv[])
         if (strcmp(argv[1] + fileLen - suffixLen, ".zen") != 0)
         {
             fprintf(stderr, "tokenizer source input must be a .zen file");
-            free(tokenizer);
             return 1;
         }
 
@@ -127,11 +119,15 @@ int main(int argc, char const *argv[])
         if (!fp)
         {
             perror("Unable to open file");
-            free(tokenizer);
             return 1;
         }
 
-        initialize_tokenizer(tokenizer, fp);
+        Tokenizer *tokenizer = create_tokenizer(fp);
+        if (!tokenizer)
+        {
+            perror("Could not allocate memory for Tokenizer");
+            return 1;
+        }
 
         Token token;
         while ((token = next_token(tokenizer)).type != TOKEN_EOF)
@@ -156,11 +152,15 @@ int main(int argc, char const *argv[])
     if (!fp)
     {
         perror("Unable to open file");
-        free(tokenizer);
         return 1;
     }
 
-    initialize_tokenizer(tokenizer, fp);
+    Tokenizer *tokenizer = create_tokenizer(fp);
+    if (!tokenizer)
+    {
+        perror("Could not allocate memory for Tokenizer");
+        return 1;
+    }
 
     test_skip_whitespace(tokenizer, 'i', __FILE__, __LINE__);
     move_pointer(tokenizer, strlen("int")); // Skip the rest of the word "int"
@@ -174,7 +174,7 @@ int main(int argc, char const *argv[])
     move_pointer(tokenizer, 1);
     test_skip_whitespace(tokenizer, 'p', __FILE__, __LINE__);
 
-    initialize_tokenizer(tokenizer, fp); // Reset tokenizer and file
+    reset_tokenizer(tokenizer, fp); // Reset tokenizer and file
 
     test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "int"}, __FILE__, __LINE__);
     test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "x"}, __FILE__, __LINE__);
@@ -202,7 +202,7 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    initialize_tokenizer(tokenizer, fp); // Reset tokenizer and file
+    reset_tokenizer(tokenizer, fp); // Reset tokenizer and file
 
     test_skip_whitespace(tokenizer, 's', __FILE__, __LINE__);
     move_pointer(tokenizer, strlen("string"));
@@ -244,7 +244,7 @@ int main(int argc, char const *argv[])
     move_pointer(tokenizer, 1);
     test_skip_whitespace(tokenizer, '}', __FILE__, __LINE__);
 
-    initialize_tokenizer(tokenizer, fp); // Reset tokenizer and file
+    reset_tokenizer(tokenizer, fp); // Reset tokenizer and file
 
     test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "string"}, __FILE__, __LINE__);
     test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);

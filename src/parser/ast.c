@@ -1,7 +1,7 @@
 /**
- * @file parser/parser.c
+ * @file parser/ast.c
  * @author Gavin Borne
- * @brief Parser for the Zen programming language
+ * @brief Abstract syntax tree and AST parsing for the Zen programming language
  * @copyright Copyright (C) 2025  Gavin Borne
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,27 +18,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <string.h>
-
-#include "parser.h"
+#include <stdlib.h>
 
 #include "ast.h"
-#include "parser_base.h"
 
-ASTNode *parse_primary(Parser *parser)
+/**
+ * @brief Create a number node
+ *
+ * @param value       Number value
+ * @return ASTNode* - Node
+ */
+ASTNode *create_number_node(float value)
 {
-   if (parser->current.type == TOKEN_NUMBER)
-   {
-      double value = atof(parser->current.value);
-      advance(parser);
-      return create_number_node(value);
-   }
-   else if (parser->current.type == TOKEN_IDENTIFIER)
-   {
-      char *name = strdup(parser->current.value);
-      advance(parser);
-      return create_identifier_node(name); // TODO: IMPLEMENT THIS FUNCTION
-   }
-   perror("Expected expression");
-   exit(EXIT_FAILURE);
+   ASTNode *node = malloc(sizeof(ASTNode));
+   node->type = AST_NUMBER;
+   node->number.value = value;
+   return node;
 }

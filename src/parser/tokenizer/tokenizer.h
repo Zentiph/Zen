@@ -1,5 +1,5 @@
 /**
- * @file tokenizer.h
+ * @file parser/tokenizer/tokenizer.h
  * @author Gavin Borne
  * @brief Tokenizer header for the Zen programming language
  * @copyright Copyright (C) 2025  Gavin Borne
@@ -24,7 +24,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "state.h"
+#include "tokenizer_base.h"
 
 #define MAX_TOKEN_LENGTH 128
 #define NEWLINE_CHAR '\n'

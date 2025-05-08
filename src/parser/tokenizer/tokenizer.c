@@ -1,5 +1,5 @@
 /**
- * @file tokenizer.c
+ * @file parser/tokenizer/tokenizer.c
  * @author Gavin Borne
  * @brief Tokenizer for the Zen programming language
  * @copyright Copyright (C) 2025  Gavin Borne
@@ -26,7 +26,7 @@
 
 #include "tokenizer.h"
 
-#include "state.h"
+#include "tokenizer_base.h"
 
 /**
  * @brief Representation of a keyword token.

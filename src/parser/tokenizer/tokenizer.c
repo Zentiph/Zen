@@ -139,12 +139,12 @@ Token next_token(Tokenizer *tokenizer)
    char ch = advance(tokenizer);
 
    // Handle single-line comments
-   if (ch == '/' && !buffer_full(tokenizer) && current_char(tokenizer) == '/')
+   if (ch == '/' && !buffer_full(tokenizer) && peek(tokenizer) == '/')
    {
       token.type = TOKEN_COMMENT;
       int i = 0;
-      // Skip the second '/'
-      move_pointer(tokenizer, 1);
+      // Skip the slashes
+      move_pointer(tokenizer, 2);
 
       while (true)
       {
@@ -168,12 +168,12 @@ Token next_token(Tokenizer *tokenizer)
    }
 
    // Handle multi-line comments (/. ... ./)
-   if (ch == '/' && !buffer_full(tokenizer) && current_char(tokenizer) == '.')
+   if (ch == '/' && !buffer_full(tokenizer) && peek(tokenizer) == '.')
    {
       token.type = TOKEN_COMMENT;
       int i = 0;
-      // Skip the '.'
-      move_pointer(tokenizer, 1);
+      // Skip the slash and dot
+      move_pointer(tokenizer, 2);
 
       while (true)
       {

@@ -18,6 +18,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// TODO: ORGANIZE ORDER OF FUNCS IN ALL FILES
+
 #ifndef STATE_H
 #define STATE_H
 
@@ -31,15 +33,26 @@
  */
 typedef struct
 {
-   /** The file to read from */
    FILE *fp;
-   /** A buffer of size BUFFER_SIZE to hold chars */
    char buffer[BUFFER_SIZE];
-   /** Pointer to the buffer */
    char *ptr;
-   /** The number of bytes read from the most recent fread operation */
    size_t bytesRead;
+   int line;
+   int column;
 } Tokenizer;
+
+/**
+ * @brief A snapshot of a tokenizer, used to restore previous states.
+ */
+typedef struct
+{
+   char buffer[BUFFER_SIZE];
+   ptrdiff_t ptrOffset;
+   size_t bytesRead;
+   int line;
+   int column;
+   fpos_t filePos;
+} TokenizerSnapshot;
 
 /**
  * @brief Determine if the current tokenizer's buffer is full.
@@ -83,14 +96,6 @@ char peek(Tokenizer *tokenizer);
 char advance(Tokenizer *tokenizer);
 
 /**
- * @brief Retreat to the previous char and return the current char.
- *
- * @param tokenizer Tokenizer
- * @return char     Char that was retreated past
- */
-char retreat(Tokenizer *tokenizer);
-
-/**
  * @brief Determine whether the next character is in bounds or not.
  *
  * @param tokenizer Tokenizer state
@@ -117,5 +122,21 @@ void move_pointer(Tokenizer *tokenizer, int amount);
  * @param fp        File pointer
  */
 void initialize_tokenizer(Tokenizer *tokenizer, FILE *fp);
+
+/**
+ * @brief Save a tokenizer's state to a snapshot.
+ *
+ * @param tokenizer Tokenizer to save the state of
+ * @param snapshot  Snapshot to save into
+ */
+void save_tokenizer_state(Tokenizer *tokenizer, TokenizerSnapshot *snapshot);
+
+/**
+ * @brief Load a stored snapshot into a tokenizer.
+ *
+ * @param tokenizer Tokenizer to load state into
+ * @param snapshot  State to load
+ */
+void load_tokenizer_state(Tokenizer *tokenizer, const TokenizerSnapshot *snapshot);
 
 #endif // STATE_H

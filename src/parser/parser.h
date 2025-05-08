@@ -1,7 +1,7 @@
 /**
- * @file parser.c
+ * @file parser.h
  * @author Gavin Borne
- * @brief Parser for the Zen programming language
+ * @brief Parser header for the Zen programming language
  * @copyright Copyright (C) 2025  Gavin Borne
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,24 +18,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
-#include <string.h>
-
-#include "parser.h"
-
 #include "../tokenizer/tokenizer.h"
-#include "../tokenizer/state.h"
-#include "../tokenizer/token_repr.h"
+
+typedef struct
+{
+   Token current;
+   Tokenizer tokenizer;
+} Parser;
 
 /**
  * @brief Advance to the next token.
  *
  * @param parser Parser
  */
-void advance(Parser *parser)
-{
-   parser->current = next_token(&parser->tokenizer);
-}
+void advance(Parser *parser);
 
 /**
  * @brief Ensure the current token matches a specific type, then advance.
@@ -43,17 +39,7 @@ void advance(Parser *parser)
  * @param parser Parser
  * @param type   Type to match
  */
-void expect(Parser *parser, TokenType type)
-{
-   if (parser->current.type != type)
-   {
-      fprintf(stderr, "Syntax error: Expected %s, but got %s\n",
-              token_type_to_string(type),
-              token_type_to_string(parser->current.type));
-      exit(EXIT_FAILURE);
-   }
-   advance(parser);
-}
+void expect(Parser *parser, TokenType type);
 
 /**
  * @brief Check if the current token matches the given type.
@@ -64,15 +50,7 @@ void expect(Parser *parser, TokenType type)
  * @return true  - If the types match
  * @return false - Otherwise
  */
-bool match(Parser *parser, TokenType type)
-{
-   if (parser->current.type == type)
-   {
-      advance(parser);
-      return true;
-   }
-   return false;
-}
+bool match(Parser *parser, TokenType type);
 
 /**
  * @brief Determine if the current token matches the given type without advancing.
@@ -82,10 +60,7 @@ bool match(Parser *parser, TokenType type)
  * @return true  - If the types match
  * @return false - Otherwise
  */
-bool check(Parser *parser, TokenType type)
-{
-   return parser->current.type == type;
-}
+bool check(Parser *parser, TokenType type);
 
 /**
  * @brief Similar to expect(), but with a message,
@@ -95,15 +70,7 @@ bool check(Parser *parser, TokenType type)
  * @param type    Token type to expect
  * @param message Error message
  */
-void expect_message(Parser *parser, TokenType type, const char *message)
-{
-   if (parser->current.type != type)
-   {
-      fprintf(stderr, "Syntax error: %s (found %s)\n", message, token_type_to_string(parser->current.type));
-      exit(EXIT_FAILURE);
-   }
-   advance(parser);
-}
+void expect_message(Parser *parser, TokenType type, const char *message);
 
 /**
  * @brief Peek at the next token.
@@ -111,11 +78,4 @@ void expect_message(Parser *parser, TokenType type, const char *message)
  * @param tokenizer Tokenizer to peek with
  * @return Token  - Next token
  */
-Token peek(Tokenizer *tokenizer)
-{
-   TokenizerSnapshot *snapshot;
-   save_tokenizer_state(tokenizer, snapshot);
-   Token lookahead = next_token(tokenizer);
-   load_tokenizer_state(tokenizer, snapshot);
-   return lookahead;
-}
+Token peek(Tokenizer *tokenizer);

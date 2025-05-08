@@ -20,6 +20,7 @@
 
 #include <stdbool.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "state.h"
 
@@ -71,25 +72,26 @@ char peek(Tokenizer *tokenizer)
 }
 
 /**
- * @brief Advance to the next char and return the current char.
+ * @brief Advance to the next char return it.
  *
  * @param tokenizer Tokenizer
- * @return char     Char that was advanced past
+ * @return char     New char
  */
 char advance(Tokenizer *tokenizer)
 {
-   return *tokenizer->ptr++;
-}
+   char next = *tokenizer->ptr++;
 
-/**
- * @brief Retreat to the previous char and return the current char.
- *
- * @param tokenizer Tokenizer
- * @return char     Char that was retreated past
- */
-char retreat(Tokenizer *tokenizer)
-{
-   return *tokenizer->ptr--;
+   if (next == '\n')
+   {
+      tokenizer->line++;
+      tokenizer->column = 1;
+   }
+   else
+   {
+      tokenizer->column++;
+   }
+
+   return next;
 }
 
 /**
@@ -130,9 +132,43 @@ void initialize_tokenizer(Tokenizer *tokenizer, FILE *fp)
    tokenizer->fp = fp;
    tokenizer->ptr = tokenizer->buffer;
    tokenizer->bytesRead = 0;
+   tokenizer->line = 1;
+   tokenizer->column = 1;
    // Clear buffer
    for (size_t i = 0; i < BUFFER_SIZE; i++)
    {
       tokenizer->buffer[i] = '\0';
    }
+}
+
+/**
+ * @brief Save a tokenizer's state to a snapshot.
+ *
+ * @param tokenizer Tokenizer to save the state of
+ * @param snapshot  Snapshot to save into
+ */
+void save_tokenizer_state(Tokenizer *tokenizer, TokenizerSnapshot *snapshot)
+{
+   memcpy(snapshot->buffer, tokenizer->buffer, BUFFER_SIZE);
+   snapshot->ptrOffset = tokenizer->ptr - tokenizer->buffer;
+   snapshot->bytesRead = tokenizer->bytesRead;
+   snapshot->line = tokenizer->line;
+   snapshot->column = tokenizer->column;
+   fgetpos(tokenizer->fp, &snapshot->filePos);
+}
+
+/**
+ * @brief Load a stored snapshot into a tokenizer.
+ *
+ * @param tokenizer Tokenizer to load state into
+ * @param snapshot  State to load
+ */
+void load_tokenizer_state(Tokenizer *tokenizer, const TokenizerSnapshot *snapshot)
+{
+   memcpy(tokenizer->buffer, snapshot->buffer, BUFFER_SIZE);
+   tokenizer->ptr = tokenizer->buffer + snapshot->ptrOffset;
+   tokenizer->bytesRead = snapshot->bytesRead;
+   tokenizer->line = snapshot->line;
+   tokenizer->column = snapshot->column;
+   fsetpos(tokenizer->fp, &snapshot->filePos);
 }

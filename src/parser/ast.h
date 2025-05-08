@@ -130,4 +130,88 @@ typedef struct ASTNode
  */
 ASTNode *create_number_node(float value);
 
+/**
+ * @brief Create an identifier node
+ *
+ * @param name        Identifier name
+ * @return ASTNode* - Node
+ */
+ASTNode *create_identifier_node(char *name);
+
+/**
+ * @brief Create a binary node
+ *
+ * @param left        Node to the left of the operator
+ * @param op          Binary operator (e.g. TOKEN_PLUS)
+ * @param right       Node to the right of the operator
+ * @return ASTNode* - Node
+ */
+ASTNode *create_binary_node(ASTNode *left, TokenType op, ASTNode *right);
+
+/**
+ * @brief Create a unary node
+ *
+ * @param op          Unary operator (e.g. TOKEN_MINUS)
+ * @param operand     Node to perform the operation on
+ * @return ASTNode* - Node
+ */
+ASTNode *create_unary_node(TokenType op, ASTNode *operand);
+
+/**
+ * @brief Create an if statement node
+ *
+ * @param condition   The condition for the if block to execute
+ * @param then_branch Node containing the then branch code
+ * @param else_branch Node containing the else branch code
+ * @return ASTNode* - Node
+ */
+ASTNode *create_if_node(ASTNode *condition, ASTNode *then_branch, ASTNode *else_branch);
+
+/**
+ * @brief Create a block node
+ *
+ * @param statements      Statements in the block
+ * @param statement_count Number of statements in the block
+ * @return ASTNode*     - Node
+ */
+ASTNode *create_block_node(ASTNode **statements, int statement_count);
+
+/**
+ * @brief Create a function definition node
+ *
+ * @param name        Function name
+ * @param params      Function parameters
+ * @param param_count Number of parameters in the function
+ * @param body        The code inside the function
+ * @return ASTNode* - Node
+ */
+ASTNode *create_function_def_node(char *name, char **params, int param_count, ASTNode *body);
+
+/**
+ * @brief Create a function call
+ *
+ * @param name        Name of the function
+ * @param args        Arguments passed to the function
+ * @param arg_count   Number of args passed to the function
+ * @return ASTNode* - Node
+ */
+ASTNode *create_function_call_node(char *name, ASTNode **args, int arg_count);
+
+/**
+ * @brief Create a assignment node
+ *
+ * @param var_name    The name of the variable
+ * @param value       The value to assign
+ * @return ASTNode* - Node
+ */
+ASTNode *create_assignment_node(char *var_name, ASTNode *value);
+
+/**
+ * @brief Create a return node
+ *
+ * @param value       Value to return
+ * @return ASTNode* - Node
+ */
+ASTNode *create_return_node(ASTNode *value);
+
 #endif // AST_H

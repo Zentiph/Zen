@@ -22,7 +22,6 @@
 
 #include "parser.h"
 
-#include "ast.h"
 #include "parser_base.h"
 
 ASTNode *parse_primary(Parser *parser)

@@ -26,8 +26,6 @@
 
 #include "tokenizer.h"
 
-#include "tokenizer_base.h"
-
 /**
  * @brief Representation of a keyword token.
  */

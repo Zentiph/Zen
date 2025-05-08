@@ -23,7 +23,6 @@
 
 #include "parser_base.h"
 
-#include "../tokenizer/tokenizer.h"
 #include "../tokenizer/tokenizer_base.h"
 #include "../tokenizer/token_repr.h"
 

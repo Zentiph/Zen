@@ -18,7 +18,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-// gcc tests/parser/tokenizer/test_tokenizer.c src/parser/tokenizer/tokenizer.c src/parser/tokenizer/state.c src/parser/tokenizer/token_repr.c tests/parser/zassert.c -o tests/parser/tokenizer/test_tokenizer
+// gcc tests/parser/tokenizer/test_tokenizer.c src/parser/tokenizer/tokenizer.c src/parser/tokenizer/tokenizer_base.c src/parser/tokenizer/token_repr.c tests/parser/zassert.c -o tests/parser/tokenizer/test_tokenizer
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -26,7 +26,7 @@
 #include <string.h>
 
 #include "../zassert.h"
-#include "../../../src/parser/tokenizer/state.h"
+#include "../../../src/parser/tokenizer/tokenizer_base.h"
 #include "../../../src/parser/tokenizer/tokenizer.h"
 #include "../../../src/parser/tokenizer/token_repr.h"
 

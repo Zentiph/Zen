@@ -20,8 +20,6 @@
 
 #include "token_repr.h"
 
-#include "tokenizer.h"
-
 /**
  * @brief Convert a TokenType to a string.
  *

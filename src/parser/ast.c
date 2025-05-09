@@ -103,6 +103,22 @@ ASTNode *create_if_node(ASTNode *condition, ASTNode *then_branch, ASTNode *else_
 }
 
 /**
+ * @brief Create a while node
+ *
+ * @param condition   Condition for the while block to execute
+ * @param body        Body of the while block
+ * @return ASTNode* - Node
+ */
+ASTNode *create_while_node(ASTNode *condition, ASTNode *body)
+{
+   ASTNode *node = malloc(sizeof(ASTNode));
+   node->type = AST_WHILE;
+   node->while_stmt.condition = condition;
+   node->while_stmt.body = body;
+   return node;
+}
+
+/**
  * @brief Create a block node
  *
  * @param statements      Statements in the block

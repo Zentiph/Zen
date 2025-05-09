@@ -43,6 +43,8 @@ const char *token_type_to_string(TokenType type)
       return "TOKEN_FN";
    case TOKEN_CLASS:
       return "TOKEN_CLASS";
+   case TOKEN_EXTENDS:
+      return "TOKEN_EXTENDS";
    case TOKEN_IMPORT:
       return "TOKEN_IMPORT";
    case TOKEN_FROM:
@@ -59,8 +61,8 @@ const char *token_type_to_string(TokenType type)
       return "TOKEN_NOT";
    case TOKEN_IN:
       return "TOKEN_IN";
-   case TOKEN_EXTENDS:
-      return "TOKEN_EXTENDS";
+   case TOKEN_RETURN:
+      return "TOKEN_RETURN";
 
    // Variable size tokens
    case TOKEN_COMMENT:
@@ -170,6 +172,7 @@ void print_token(Token token)
        "TOKEN_FOR       ",
        "TOKEN_FN        ",
        "TOKEN_CLASS     ",
+       "TOKEN_EXTENDS   ",
        "TOKEN_IMPORT    ",
        "TOKEN_FROM      ",
        "TOKEN_EXPORT    ",
@@ -178,7 +181,7 @@ void print_token(Token token)
        "TOKEN_OR        ",
        "TOKEN_NOT       ",
        "TOKEN_IN        ",
-       "TOKEN_EXTENDS   ",
+       "TOKEN_RETURN   ",
        "TOKEN_COMMENT   ",
        "TOKEN_IDENTIFIER",
        "TOKEN_NUMBER    ",

@@ -25,8 +25,9 @@
 
 typedef struct
 {
+   Tokenizer *tokenizer;
    Token current;
-   Tokenizer tokenizer;
+   Token previous;
 } Parser;
 
 /**
@@ -35,14 +36,6 @@ typedef struct
  * @param parser Parser
  */
 void advance(Parser *parser);
-
-/**
- * @brief Ensure the current token matches a specific type, then advance.
- *
- * @param parser Parser
- * @param type   Type to match
- */
-void expect(Parser *parser, TokenType type);
 
 /**
  * @brief Check if the current token matches the given type.
@@ -73,7 +66,7 @@ bool check(Parser *parser, TokenType type);
  * @param type    Token type to expect
  * @param message Error message
  */
-void expect_message(Parser *parser, TokenType type, const char *message);
+void expect(Parser *parser, TokenType type, const char *message);
 
 /**
  * @brief Peek at the next token.
@@ -82,5 +75,13 @@ void expect_message(Parser *parser, TokenType type, const char *message);
  * @return Token  - Next token
  */
 Token peek_token(Tokenizer *tokenizer);
+
+/**
+ * @brief Report a syntax error to the parser.
+ *
+ * @param parser  Parser
+ * @param message Error message
+ */
+void error(Parser *parser, const char *message);
 
 #endif // PARSER_BASE_H

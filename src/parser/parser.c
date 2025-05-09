@@ -22,22 +22,316 @@
 
 #include "parser.h"
 
+#include "ast.h"
 #include "parser_base.h"
 
+// TODO REFACTOR ALL FUNCTION DOCS TO BE DOXYGEN STYLED, E.G.
+/// @brief
+/// @param
+// etc
+// TODO: REMOVE UNNECESSARY PARAM DESCRIPTORS FROM DOCS E.G. @param parser - Parser
+
+// TODO GO THROUGH ALL CODE AND REFORMAT (ADD SPACES/RETURNS) WHERE APPROPRIATE
+
+/**
+ * @brief Parse a primary expression
+ *
+ * @param parser      Parser
+ * @return ASTNode* - Node
+ */
 ASTNode *parse_primary(Parser *parser)
 {
-   if (parser->current.type == TOKEN_NUMBER)
+   if (match(parser, TOKEN_NUMBER))
    {
-      double value = atof(parser->current.value);
-      advance(parser);
+      float value = strtof(parser->previous.value, NULL);
       return create_number_node(value);
    }
-   else if (parser->current.type == TOKEN_IDENTIFIER)
+
+   if (match(parser, TOKEN_IDENTIFIER))
+   {
+      char *name = strdup(parser->previous.value);
+      // Is it a function call?
+      if (match(parser, TOKEN_LT_PAREN))
+      {
+         ASTNode **args = NULL;
+         int arg_count = 0;
+         if (!check(parser, TOKEN_RT_PAREN))
+         {
+            do
+            {
+               ASTNode *arg = parse_expression(parser);
+               args = realloc(args, sizeof(ASTNode *) * arg_count++);
+               args[arg_count - 1] = arg;
+            } while (match(parser, TOKEN_COMMA));
+         }
+         expect_message(parser, TOKEN_RT_PAREN, "Expected ')' after function args.");
+         return create_function_call_node(name, args, arg_count);
+      }
+      return create_identifier_node(name);
+   }
+
+   if (match(parser, TOKEN_LT_PAREN))
+   {
+      ASTNode *expr = parse_expression(parser);
+      expect_message(parser, TOKEN_RT_PAREN, "Expected ')' after parenthesized expression.");
+      return expr;
+   }
+
+   error(parser, "Expected expression."); // TURN INTO error(Parser *parser, const char *message)
+   return NULL;
+}
+
+/**
+ * @brief Parse a unary expression, like '-' or 'not'
+ *
+ * @param parser      Parser
+ * @return ASTNode* - Node
+ */
+ASTNode *parse_unary(Parser *parser)
+{
+   if (match(parser, TOKEN_SUB) || match(parser, TOKEN_NOT))
+   {
+      TokenType op = parser->previous.type;
+      ASTNode *right = parse_unary(parser);
+      return create_unary_node(op, right);
+   }
+   return parse_primary(parser);
+}
+
+/**
+ * @brief Parse a factor (*, /, %).
+ *
+ * @param parser      Parser
+ * @return ASTNode* - Node
+ */
+ASTNode *parse_factor(Parser *parser)
+{
+   // Unary operators take precedence over binary operators.
+   ASTNode *node = parse_unary(parser);
+   while (match(parser, TOKEN_MUL) || match(parser, TOKEN_DIV) || match(parser, TOKEN_MOD))
+   {
+      TokenType op = parser->previous.type;
+      ASTNode *right = parse_unary(parser);
+      node = create_binary_node(node, op, right);
+   }
+   return node;
+}
+
+/**
+ * @brief Parse a term (+, -).
+ *
+ * @param parser      Parser
+ * @return ASTNode* - Node
+ */
+ASTNode *parse_term(Parser *parser)
+{
+   // Multiplication and division take precedence
+   // over addition and subtraction.
+   ASTNode *node = parse_factor(parser);
+   while (match(parser, TOKEN_ADD) || match(parser, TOKEN_SUB))
+   {
+      TokenType op = parser->previous.type;
+      ASTNode *right = parse_factor(parser);
+      node = create_binary_node(node, op, right);
+   }
+   return node;
+}
+
+/**
+ * @brief Parse a comparison (==, !=, <, >, <=, >=)
+ *
+ * @param parser
+ * @return ASTNode*
+ */
+ASTNode *parse_comparison(Parser *parser)
+{
+   // Addition and subtraction take precedence over comparison.
+   ASTNode *node = parse_term(parser);
+   while (match(parser, TOKEN_EQ) || match(parser, TOKEN_NE) || match(parser, TOKEN_LT) || match(parser, TOKEN_GT) || match(parser, TOKEN_LE) || match(parser, TOKEN_GE))
+   {
+      TokenType op = parser->previous.type;
+      ASTNode *right = parse_term(parser);
+      node = create_binary_node(node, op, right);
+   }
+   return node;
+}
+
+/**
+ * @brief Parse a logical expression (and, or)
+ *
+ * @param parser      Parser
+ * @return ASTNode* - Node
+ */
+ASTNode *parse_logic(Parser *parser)
+{
+   // Comparison takes precedence over logical operators
+   ASTNode *node = parse_comparison(parser);
+   while (match(parser, TOKEN_AND) || match(parser, TOKEN_OR))
+   {
+      TokenType op = parser->previous.type;
+      ASTNode *right = parse_comparison(parser);
+      node = create_binary_node(node, op, right);
+   }
+   return node;
+}
+
+// NOTE: Remove this at some point, if desired.
+
+/**
+ * @brief Parse an expression. This is a top-level expression entrypoint,
+ *        but is identical to parse_logic().
+ *
+ * @param parser      Parser
+ * @return ASTNode* - Node
+ */
+ASTNode *parse_expression(Parser *parser)
+{
+   return parse_logic(parser);
+}
+
+/**
+ * @brief Parse a statement (return, assignment, or regular expression).
+ *
+ * @param parser      Parser
+ * @return ASTNode* - Node
+ */
+ASTNode *parse_statement(Parser *parser)
+{
+   if (match(parser, TOKEN_RETURN))
+   {
+      ASTNode *value = NULL;
+      if (!check(parser, TOKEN_NEWLINE))
+      {
+         value = parse_expression(parser);
+      }
+      expect(parser, TOKEN_NEWLINE, "Expect newline after return and value.");
+      return create_return_node(value);
+   }
+
+   if (check(parser, TOKEN_IDENTIFIER) && peek_token(parser).type == TOKEN_ASSIGN)
    {
       char *name = strdup(parser->current.value);
       advance(parser);
-      return create_identifier_node(name); // TODO: IMPLEMENT THIS FUNCTION
+      expect(parser, TOKEN_ASSIGN, "Expect '=' in assignment.");
+      ASTNode *value = parse_expression(parser);
+      expect(parser, TOKEN_NEWLINE, "Expect newline after assignment.");
+      return create_assignment_node(name, value);
    }
-   perror("Expected expression");
-   exit(EXIT_FAILURE);
+
+   // If not a return or assignment, then it's an expression
+   ASTNode *expr = parse_expression(parser);
+   expect(parser, TOKEN_NEWLINE, "Expect newline after expression.");
+   return expr;
+}
+
+/**
+ * @brief Parse a code block.
+ *
+ * @param parser      Parser
+ * @return ASTNode* - Node
+ */
+ASTNode *parse_block(Parser *parser)
+{
+   expect(parser, TOKEN_LT_CURLY, "Expect '{' to start block.");
+   ASTNode **stmts = NULL;
+   int count = 0;
+
+   while (!check(parser, TOKEN_RT_CURLY) && !check(parser, TOKEN_EOF))
+   {
+      stmts = realloc(stmts, sizeof(ASTNode *) * count++);
+      stmts[count - 1] = parse_statement(parser);
+   }
+
+   expect(parser, TOKEN_RT_CURLY, "Expect '}' after block.");
+   return create_block_node(stmts, count);
+}
+
+/**
+ * @brief Parse an if block.
+ *
+ * @param parser      Parser
+ * @return ASTNode* - Node
+ */
+ASTNode *parse_if(Parser *parser)
+{
+   expect(parser, TOKEN_IF, "Expect 'if' at start of if block.");
+
+   ASTNode *condition = parse_expression(parser);
+   ASTNode *then_branch = parse_block(parser);
+
+   ASTNode *else_branch = NULL;
+   if (match(parser, TOKEN_ELSE))
+   {
+      else_branch = parse_block(parser);
+   }
+   return create_if_node(condition, then_branch, else_branch);
+}
+
+/**
+ * @brief Parse a while block.
+ */
+ASTNode *parse_while(Parser *parser)
+{
+   expect(parser, TOKEN_WHILE, "Expect 'while' at start of while block.");
+
+   ASTNode *condition = parse_expression(parser);
+   ASTNode *body = parse_block(parser);
+   return create_while_node(condition, body);
+}
+
+/**
+ * @brief Parse a function definition
+ */
+ASTNode *parse_function_def(Parser *parser)
+{
+   expect(parser, TOKEN_FN, "Expect 'fn' at start of function definition.");
+   expect(parser, TOKEN_IDENTIFIER, "Expect function name.");
+   char *name = strdup(parser->previous.value);
+
+   expect(parser, TOKEN_LT_PAREN, "Expect '(' after function name.");
+   char **params = NULL;
+   int param_count = 0;
+
+   if (!check(parser, TOKEN_RT_PAREN))
+   {
+      do
+      {
+         expect(parser, TOKEN_IDENTIFIER, "Expect parameter name.");
+         params = realloc(params, sizeof(char *) * param_count++);
+         params[param_count - 1] = strdup(parser->previous.value);
+      } while (match(parser, TOKEN_COMMA));
+   }
+   expect(parser, TOKEN_RT_PAREN, "Expect ')' after function parameters.");
+
+   ASTNode *body = parse_block(parser);
+   return create_function_def_node(name, params, param_count, body);
+}
+
+// TODO: IMPLEMENT MORE PARSE FUNCTIONS. USE EBNF/SYNTAX.MD TO HELP GUIDE
+
+/**
+ * @brief The top-level parsing entry:
+ *        a program, which consists of a series of
+ *        function definitions and statements.
+ */
+ASTNode *parse_program(Parser *parser)
+{
+   ASTNode **stmts = NULL;
+   int count = 0;
+
+   while (!check(parser, TOKEN_EOF))
+   {
+      stmts = realloc(stmts, sizeof(ASTNode *) * count++);
+
+      if (check(parser, TOKEN_FN))
+      {
+         stmts[count - 1] = parse_function_def(parser);
+      }
+      else
+      {
+         stmts[count - 1] = parse_statement(parser);
+      }
+   }
+
+   return create_block_node(stmts, count);
 }

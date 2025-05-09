@@ -18,6 +18,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+// TODO: UPDATE PRACTICES SO ALL VAR NAMES ARE snake_case
+
 #include <stdbool.h>
 #include <string.h>
 
@@ -26,6 +28,20 @@
 #include "../tokenizer/tokenizer_base.h"
 #include "../tokenizer/token_repr.h"
 
+Parser *create_parser(Tokenizer *tokenizer)
+{
+   Parser *parser = malloc(sizeof(parser));
+   parser->tokenizer = tokenizer;
+   parser->current = next_token(&parser->tokenizer);
+
+   Token token;
+   token.type = TOKEN_INVALID;
+   token.value[0] = '\0';
+   parser->previous = token;
+
+   return parser;
+}
+
 /**
  * @brief Advance to the next token.
  *
@@ -33,25 +49,8 @@
  */
 void advance(Parser *parser)
 {
+   parser->previous = parser->current;
    parser->current = next_token(&parser->tokenizer);
-}
-
-/**
- * @brief Ensure the current token matches a specific type, then advance.
- *
- * @param parser Parser
- * @param type   Type to match
- */
-void expect(Parser *parser, TokenType type)
-{
-   if (parser->current.type != type)
-   {
-      fprintf(stderr, "Syntax error: Expected %s, but got %s\n",
-              token_type_to_string(type),
-              token_type_to_string(parser->current.type));
-      exit(EXIT_FAILURE);
-   }
-   advance(parser);
 }
 
 /**
@@ -87,14 +86,13 @@ bool check(Parser *parser, TokenType type)
 }
 
 /**
- * @brief Similar to expect(), but with a message,
- *        Ensure the current token matches the given type, then advance.
+ * @brief Ensure the current token matches the given type, then advance.
  *
  * @param parser  Parser
  * @param type    Token type to expect
  * @param message Error message
  */
-void expect_message(Parser *parser, TokenType type, const char *message)
+void expect(Parser *parser, TokenType type, const char *message)
 {
    if (parser->current.type != type)
    {
@@ -117,4 +115,35 @@ Token peek_token(Tokenizer *tokenizer)
    Token lookahead = next_token(tokenizer);
    load_tokenizer_state(tokenizer, snapshot);
    return lookahead;
+}
+
+/**
+ * @brief Generate a syntax error message.
+ *
+ * @param message  Error message
+ * @param filename Filename the error occurred in
+ * @param line     Line number the error occurred at
+ * @return char* - Error message
+ */
+char *_generate_error_message(const char *message, const char *filename, int line)
+{
+   size_t buffer_size = 512;
+   char *error_message = malloc(buffer_size);
+   if (!error_message)
+      return NULL;
+
+   snprintf(error_message, buffer_size, "Syntax error at %s:%d - %s", filename, line, message);
+   return error_message;
+}
+
+/**
+ * @brief Report a syntax error to the parser.
+ *
+ * @param parser  Parser
+ * @param message Error message
+ */
+void error(Parser *parser, const char *message)
+{
+   // TODO: ADD BETTER HANDLING EVENTUALLY
+   fprintf(stderr, _generate_error_message(message, parser->tokenizer->filename, parser->tokenizer->line));
 }

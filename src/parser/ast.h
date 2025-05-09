@@ -35,7 +35,7 @@ typedef enum
    AST_UNARY,
    AST_IF,
    AST_BLOCK,
-   AST_WHITE,
+   AST_WHILE,
    AST_FUNCTION_DEF,
    AST_FUNCTION_CALL,
    AST_VAR_DECL,
@@ -166,6 +166,15 @@ ASTNode *create_unary_node(TokenType op, ASTNode *operand);
  * @return ASTNode* - Node
  */
 ASTNode *create_if_node(ASTNode *condition, ASTNode *then_branch, ASTNode *else_branch);
+
+/**
+ * @brief Create a while node
+ *
+ * @param condition   Condition for the while block to execute
+ * @param body        Body of the while block
+ * @return ASTNode* - Node
+ */
+ASTNode *create_while_node(ASTNode *condition, ASTNode *body);
 
 /**
  * @brief Create a block node

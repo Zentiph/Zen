@@ -42,6 +42,7 @@ typedef enum
     TOKEN_FOR,
     TOKEN_FN,
     TOKEN_CLASS,
+    TOKEN_EXTENDS,
     TOKEN_IMPORT,
     TOKEN_FROM,
     TOKEN_EXPORT,
@@ -50,7 +51,7 @@ typedef enum
     TOKEN_OR,
     TOKEN_NOT,
     TOKEN_IN,
-    TOKEN_EXTENDS,
+    TOKEN_RETURN,
 
     // Variable size tokens
     TOKEN_COMMENT,

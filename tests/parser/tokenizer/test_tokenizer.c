@@ -106,23 +106,24 @@ int main(int argc, char const *argv[])
     // Source file given, run given file
     if (argc == 2)
     {
+        char *filename = argv[1];
         // Check if the file is a .zen file
-        size_t fileLen = strlen(argv[1]);
+        size_t fileLen = strlen(filename);
         int suffixLen = 4; // ".zen"
-        if (strcmp(argv[1] + fileLen - suffixLen, ".zen") != 0)
+        if (strcmp(filename + fileLen - suffixLen, ".zen") != 0)
         {
             fprintf(stderr, "tokenizer source input must be a .zen file");
             return 1;
         }
 
-        FILE *fp = fopen(argv[1], "r");
+        FILE *fp = fopen(filename, "r");
         if (!fp)
         {
             perror("Unable to open file");
             return 1;
         }
 
-        Tokenizer *tokenizer = create_tokenizer(fp);
+        Tokenizer *tokenizer = create_tokenizer(fp, filename);
         if (!tokenizer)
         {
             perror("Could not allocate memory for Tokenizer");
@@ -148,14 +149,15 @@ int main(int argc, char const *argv[])
      *                                 TESTING                                 *
      *                                 in1.zen                                 *
      ***************************************************************************/
-    FILE *fp = fopen("tests/parser/input/in1.zen", "r");
+    char *filename = "tests/parser/input/in1.zen";
+    FILE *fp = fopen(filename, "r");
     if (!fp)
     {
         perror("Unable to open file");
         return 1;
     }
 
-    Tokenizer *tokenizer = create_tokenizer(fp);
+    Tokenizer *tokenizer = create_tokenizer(fp, filename);
     if (!tokenizer)
     {
         perror("Could not allocate memory for Tokenizer");
@@ -174,7 +176,7 @@ int main(int argc, char const *argv[])
     move_pointer(tokenizer, 1);
     test_skip_whitespace(tokenizer, 'p', __FILE__, __LINE__);
 
-    reset_tokenizer(tokenizer, fp); // Reset tokenizer and file
+    reset_tokenizer(tokenizer, fp, filename); // Reset tokenizer and file
 
     test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "int"}, __FILE__, __LINE__);
     test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "x"}, __FILE__, __LINE__);
@@ -193,8 +195,8 @@ int main(int argc, char const *argv[])
      *                                 TESTING                                 *
      *                                 in2.zen                                 *
      ***************************************************************************/
-
-    fp = fopen("tests/parser/input/in2.zen", "r");
+    char *filename = "tests/parser/input/in2.zen";
+    fp = fopen(filename, "r");
     if (!fp)
     {
         perror("Unable to open file");
@@ -202,7 +204,7 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    reset_tokenizer(tokenizer, fp); // Reset tokenizer and file
+    reset_tokenizer(tokenizer, fp, filename); // Reset tokenizer and file
 
     test_skip_whitespace(tokenizer, 's', __FILE__, __LINE__);
     move_pointer(tokenizer, strlen("string"));
@@ -244,7 +246,7 @@ int main(int argc, char const *argv[])
     move_pointer(tokenizer, 1);
     test_skip_whitespace(tokenizer, '}', __FILE__, __LINE__);
 
-    reset_tokenizer(tokenizer, fp); // Reset tokenizer and file
+    reset_tokenizer(tokenizer, fp, filename); // Reset tokenizer and file
 
     test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "string"}, __FILE__, __LINE__);
     test_next_token(tokenizer, (Token){TOKEN_IDENTIFIER, "greeting"}, __FILE__, __LINE__);

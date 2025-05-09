@@ -34,6 +34,7 @@
 typedef struct
 {
    FILE *fp;
+   const char *filename;
    char buffer[BUFFER_SIZE];
    char *ptr;
    size_t bytesRead;
@@ -116,9 +117,10 @@ void move_pointer(Tokenizer *tokenizer, int amount);
  * @brief Create a tokenizer object.
  *
  * @param fp            File pointer
+ * @param filename      Filename
  * @return Tokenizer* - Tokenizer object
  */
-Tokenizer *create_tokenizer(FILE *fp);
+Tokenizer *create_tokenizer(FILE *fp, const char *filename);
 
 /**
  * @brief Reset the tokenizer with a new file,
@@ -126,8 +128,9 @@ Tokenizer *create_tokenizer(FILE *fp);
  *
  * @param tokenizer Tokenizer
  * @param fp        File pointer
+ * @param filename  Filename
  */
-void reset_tokenizer(Tokenizer *tokenizer, FILE *fp);
+void reset_tokenizer(Tokenizer *tokenizer, FILE *fp, const char *filename);
 
 /**
  * @brief Save a tokenizer's state to a snapshot.

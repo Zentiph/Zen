@@ -122,12 +122,16 @@ void move_pointer(Tokenizer *tokenizer, int amount)
  * @brief Create a tokenizer object.
  *
  * @param fp            File pointer
+ * @param filename      Filename
  * @return Tokenizer* - Tokenizer object
  */
-Tokenizer *create_tokenizer(FILE *fp)
+Tokenizer *create_tokenizer(FILE *fp, const char *filename)
 {
    Tokenizer *tokenizer = malloc(sizeof(Tokenizer));
+   if (!tokenizer)
+      return NULL;
    tokenizer->fp = fp;
+   tokenizer->filename = filename;
    tokenizer->ptr = tokenizer->buffer;
    tokenizer->bytesRead = 0;
    tokenizer->line = 1;
@@ -140,12 +144,14 @@ Tokenizer *create_tokenizer(FILE *fp)
  *        or rewind the existing file.
  *
  * @param tokenizer Tokenizer
+ * @param filename  Filename
  * @param fp        File pointer
  */
-void reset_tokenizer(Tokenizer *tokenizer, FILE *fp)
+void reset_tokenizer(Tokenizer *tokenizer, FILE *fp, const char *filename)
 {
    rewind(fp);
    tokenizer->fp = fp;
+   tokenizer->filename = filename;
    tokenizer->ptr = tokenizer->buffer;
    tokenizer->bytesRead = 0;
    tokenizer->line = 1;

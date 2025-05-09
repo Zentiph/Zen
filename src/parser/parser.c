@@ -22,9 +22,6 @@
 
 #include "parser.h"
 
-#include "ast.h"
-#include "parser_base.h"
-
 // TODO REFACTOR ALL FUNCTION DOCS TO BE DOXYGEN STYLED, E.G.
 /// @brief
 /// @param

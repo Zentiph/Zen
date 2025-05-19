@@ -210,15 +210,15 @@ Variables and functions work like in any other language, and classes take an ins
 | ------------- | ----------- | -------------------------------- |
 | `int`         | `int`       | `long long`                      |
 | `float`       | `float`     | `double double`                  |
-| `complex`     | `complex`   | `std::complex<double double>`    |
-| `string`      | `str`       | `std::string`                    |
+| `complex`     | `complex`   | -                                |
+| `string`      | `str`       | `String`                         |
 | `counter`     | `range`     | -                                |
-| `array<E>`    | `list`      | `std::vector<T>`                 |
-| `tuple<E>`    | `tuple`     | `std::tuple<T1, T2, ...>`        |
-| `map<K, V>`   | `dict`      | `std::unordered_map<Key, Value>` |
-| `set<E>`      | `set`       | `std::unordered_set<T>`          |
+| `array<E>`    | `list`      | `ArrayList<E>  `                 |
+| `tuple<E>`    | `tuple`     | `List.of(...)`                   |
+| `map<K, V>`   | `dict`      | `HashMap<K, V>`                  |
+| `set<E>`      | `set`       | `HashSet<T>`                     |
 | `bool`        | `bool`      | `bool`                           |
-| `null`        | `NoneType`  | `std::nullptr_t`                 |
+| `null`        | `NoneType`  | `null`                           |
 ```
 // int
 int x = 3

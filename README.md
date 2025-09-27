@@ -1,7 +1,7 @@
 # The Zen Programming Language
 Zen is a statically-typed, compiled programming language developed from scratch as a personal learning project. It aims to blend the type safety and structure of Java with the simplicity and developer-friendly nature of Python, making for a truly zen-like coding experience.
 
-![GitHub commit activity](https://img.shields.io/github/commit-activity/m/zentiph/zen)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/t/zentiph/zen)
 ![GitHub last commit](https://img.shields.io/github/last-commit/zentiph/zen)
 
 ## Example

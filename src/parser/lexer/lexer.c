@@ -16,12 +16,14 @@
 /// You should have received a copy of the GNU General Public License
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "lexer.h"
 
 #define MIN_(a, b) ((a) < (b) ? (a) : (b))
+#define STR_EQ(s1, s2) (strcmp((s1), (s2)) == 0)
 
 // ----- helpers -----
 
@@ -106,6 +108,40 @@ static int _prime(Lexer *lex)
 }
 
 // ----- public api -----
+static const char *kw_tab[] = {
+    "if",
+    "else",
+    "while",
+    "for",
+    "in",
+    "fn",
+    "class",
+    "extends",
+    "import",
+    "from",
+    "export",
+    "module",
+    "and",
+    "or",
+    "not",
+    NULL};
+
+Lexer *init_lexer(FILE *fp, const char *filename)
+{
+   Lexer *lex = (Lexer *)malloc(sizeof(Lexer));
+   if (!lex)
+      return NULL;
+
+   lex->fp = fp;
+   lex->filename = filename;
+   lex->ptr = lex->buf;
+   lex->bytesRead = 0;
+   lex->line = 1;
+   lex->col = 1;
+   lex->_hist_len = 0;
+
+   return lex;
+}
 
 int cur_char(Lexer *lex)
 {
@@ -176,19 +212,388 @@ void skip(Lexer *lex, int n)
          return;
 }
 
-Lexer *init_lexer(FILE *fp, const char *filename)
+void skip_whitespace(Lexer *lex)
 {
-   Lexer *lex = (Lexer *)malloc(sizeof(Lexer));
-   if (!lex)
-      return NULL;
+   while (true)
+   {
+      char cur = cur_char(lex);
+      if (isspace(cur))
+      {
+         if (cur == '\n')
+            break; // preserve newline as a token
+      }
+      else
+         break;
+   }
+}
 
-   lex->fp = fp;
-   lex->filename = filename;
-   lex->ptr = lex->buf;
-   lex->bytesRead = 0;
-   lex->line = 1;
-   lex->col = 1;
-   lex->_hist_len = 0;
+Token next_tok(Lexer *lex)
+{
+   Token tok;
+   tok.val[0] = 0;
 
-   return lex;
+   skip_whitespace(lex);
+   char cur = cur_char(lex);
+
+   // single-line comments
+   if (cur == '/' && peek(lex) == '/')
+   {
+      tok.type = TOK_COMMENT;
+      int i = 0;
+      skip(lex, 2); // skip "//"
+
+      while (true)
+      {
+         if (cur_char(lex) == '\n')
+            break;
+
+         tok.val[i++] = advance(lex);
+         if (i >= TOK_SIZE - 1)
+            break;
+      }
+
+      tok.val[i] = 0;
+      return tok;
+   }
+
+   // multi-line comments
+   if (cur == '/' && peek(lex) == '.')
+   {
+      tok.type = TOK_COMMENT;
+      int i = 0;
+      skip(lex, 2); // skip opening "/."
+
+      while (true)
+      {
+         // end of comment
+         if (cur_char(lex) == '.' && peek(lex) == '/')
+         {
+            skip(lex, 2); // skip closing "./"
+            break;
+         }
+
+         tok.val[i++] = advance(lex);
+         if (i >= TOK_SIZE - 1)
+            break;
+      }
+
+      tok.val[i] = 0;
+      return tok;
+   }
+
+   // keywords and identifiers
+   if (isalpha(cur) || cur == '_')
+   {
+      int i = 0;
+      tok.val[i++] = cur;
+
+      while (isalnum(cur_char(lex)) || cur_char(lex) == '_')
+      {
+         tok.val[i++] = advance(lex);
+         if (i >= TOK_SIZE - 1)
+            break;
+      }
+
+      tok.val[i] = 0;
+
+      // check for keyword
+      for (int i = 0; kw_tab[i] != NULL; i++)
+      {
+         if (STR_EQ(tok.val, kw_tab[i]))
+         {
+            tok.type = TOK_KW;
+            return tok;
+         }
+      }
+
+      tok.type = TOK_ID;
+      return tok;
+   }
+
+   // string literals (quotes not included in token)
+   if (cur == '"' || cur == '\'')
+   {
+      char quote = cur; // store quote type for consistency
+      tok.type = TOK_STR;
+      int i = 0;
+
+      while (true)
+      {
+         if (peek(lex) == '\\')
+         {
+            skip(lex, 1); // skip the '\'
+            char escaped = advance(lex);
+            switch (escaped)
+            {
+            case 'n':
+               tok.val[i++] = '\n';
+               break;
+            case 't':
+               tok.val[i++] = '\t';
+               break;
+            case '\\':
+               tok.val[i++] = '\\';
+               break;
+            case '"':
+               tok.val[i++] = '"';
+               break;
+            case '\'':
+               tok.val[i++] = '\'';
+               break;
+            default:
+               // handle invalid esc sequence by appending as-is
+               tok.val[i++] = '\\';
+               tok.val[i++] = escaped;
+               break;
+            }
+
+            if (i >= TOK_SIZE - 1)
+               break;
+         }
+         else if (cur_char(lex) != quote)
+         {
+            tok.val[i++] = advance(lex);
+            if (i >= TOK_SIZE - 1)
+               break;
+         }
+         else // cur_char(lex) == quote
+         {
+            break;
+         }
+      }
+
+      skip(lex, 1); // skip final quote
+      tok.val[i] = 0;
+      return tok;
+   }
+
+   // number literals and dot
+   if (isdigit(cur) || cur == '.')
+   {
+      // dot without surrounding digits, dot token
+      if (cur == '.' && !isdigit(peek(lex)))
+      {
+         tok.type = TOK_DOT;
+         tok.val[0] = '.';
+         tok.val[1] = 0;
+         return tok;
+      }
+
+      tok.type = TOK_NUM;
+      int i = 0;
+      tok.val[i++] = cur;
+      bool dotSeen = cur == '.';
+
+      while (isdigit(peek(lex)) || peek(lex) == '.')
+      {
+         if (peek(lex) == '.')
+         {
+            if (!dotSeen)
+               dotSeen = true;
+            else
+               return tok; // end the number at 2 dots
+         }
+
+         tok.val[i++] = advance(lex);
+         if (i >= TOK_SIZE - 1)
+            break;
+      }
+
+      tok.val[i] = 0;
+      return tok;
+   }
+
+   // arrows
+   if (cur == '-')
+   {
+      char next = advance(lex);
+      if (next == '>')
+      {
+         tok.type = TOK_ARROW;
+         tok.val[0] = cur;
+         tok.val[1] = next;
+         tok.val[2] = 0;
+         return tok;
+      }
+
+      // didn't need the next char, unget
+      unget(lex);
+   }
+   if (cur == '=')
+   {
+      char next = advance(lex);
+      if (next == '>')
+      {
+         tok.type = TOK_DBL_ARROW;
+         tok.val[0] = cur;
+         tok.val[1] = next;
+         tok.val[2] = 0;
+         return tok;
+      }
+
+      // didn't need the next char, unget
+      unget(lex);
+   }
+
+   // comparison ops
+   if (cur == '=' || cur == '!' || cur == '<' || cur == '>')
+   {
+      char next = advance(lex);
+      // == or != or <= or >=
+      if (next == '=')
+      {
+         switch (cur)
+         {
+         case '=':
+            tok.type = TOK_EQ;
+            break;
+         case '!':
+            tok.type = TOK_NE;
+            break;
+         case '<':
+            tok.type = TOK_LE;
+            break;
+         case '>':
+            tok.type = TOK_GE;
+            break;
+         default:
+            tok.type = TOK_INVALID;
+            break;
+         }
+
+         tok.val[0] = cur;
+         tok.val[1] = next;
+         tok.val[2] = 0;
+         return tok;
+      }
+
+      // didn't need the next char, unget
+      unget(lex);
+
+      switch (cur)
+      {
+      case '=':
+         tok.type = TOK_ASSIGN;
+         break;
+      case '!':
+         tok.type = TOK_NOT;
+         break;
+      case '<':
+         tok.type = TOK_LT;
+         break;
+      case '>':
+         tok.type = TOK_GT;
+         break;
+      default:
+         tok.type = TOK_INVALID;
+         break;
+      }
+
+      tok.val[0] = cur;
+      tok.val[1] = 0;
+      return tok;
+   }
+
+   // binary ops
+   if (cur == '+' || cur == '-' || cur == '*' || cur == '/' || cur == '%')
+   {
+      char next = advance(lex);
+      // in-place binary op
+      if (next == '=')
+      {
+         switch (cur)
+         {
+         case '+':
+            tok.type = TOK_ADD_ASSIGN;
+            break;
+         case '-':
+            tok.type = TOK_SUB_ASSIGN;
+            break;
+         case '*':
+            tok.type = TOK_MUL_ASSIGN;
+            break;
+         case '/':
+            tok.type = TOK_DIV_ASSIGN;
+            break;
+         case '%':
+            tok.type = TOK_MOD_ASSIGN;
+            break;
+         default:
+            tok.type = TOK_INVALID;
+            break;
+         }
+
+         tok.val[0] = cur;
+         tok.val[1] = next;
+         tok.val[2] = 0;
+         return tok;
+      }
+
+      // didn't need the next char, unget
+      unget(lex);
+
+      // regular binary op
+      switch (cur)
+      {
+      case '+':
+         tok.type = TOK_ADD;
+         break;
+      case '-':
+         tok.type = TOK_SUB;
+         break;
+      case '*':
+         tok.type = TOK_MUL;
+         break;
+      case '/':
+         tok.type = TOK_DIV;
+         break;
+      case '%':
+         tok.type = TOK_MOD;
+         break;
+      default:
+         tok.type = TOK_INVALID;
+         break;
+      }
+
+      tok.val[0] = cur;
+      tok.val[1] = 0;
+      return tok;
+   }
+
+   // single chars
+   switch (cur)
+   {
+   case ',':
+      tok.type = TOK_COMMA;
+      break;
+   case '(':
+      tok.type = TOK_LT_PAREN;
+      break;
+   case ')':
+      tok.type = TOK_RT_PAREN;
+      break;
+   case '[':
+      tok.type = TOK_LT_BRACK;
+      break;
+   case ']':
+      tok.type = TOK_RT_BRACK;
+      break;
+   case '{':
+      tok.type = TOK_LT_BRACE;
+      break;
+   case '}':
+      tok.type = TOK_RT_BRACE;
+      break;
+   case '\n':
+   case ';':
+      tok.type = TOK_NEWLINE;
+      break;
+   default:
+      tok.type = TOK_INVALID;
+      break;
+   }
+
+   tok.val[0] = cur;
+   tok.val[1] = 0;
+   return tok;
 }

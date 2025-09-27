@@ -67,7 +67,7 @@ typedef struct
 typedef enum
 {
    // variable size tokens
-   TOK_KEYWORD,
+   TOK_KW,
    TOK_COMMENT,
    TOK_ID,
    TOK_NUM,
@@ -84,6 +84,10 @@ typedef enum
    TOK_MUL_ASSIGN,
    TOK_DIV_ASSIGN,
    TOK_MOD_ASSIGN,
+   // logic
+   TOK_AND,
+   TOK_OR,
+   TOK_NOT,
    // comparison
    TOK_EQ,
    TOK_NE,
@@ -100,7 +104,7 @@ typedef enum
    TOK_RT_BRACE,
    // arrows
    TOK_ARROW,
-   TOK_DLB_ARROW,
+   TOK_DBL_ARROW,
    // special cases
    TOK_DOT,
    TOK_COMMA,
@@ -116,6 +120,12 @@ typedef struct
    TokenType type;
    char val[TOK_SIZE];
 } Token;
+
+/// @brief Initialize a lexer.
+/// @param fp       A pointer to the file to read from.
+/// @param filename The name of the file.
+/// @return The initialized lexer.
+Lexer *init_lexer(FILE *fp, const char *filename);
 
 /// @brief Get the char the lexer is currently examining.
 /// @param lex The lexer.
@@ -144,10 +154,15 @@ bool unget(Lexer *lex);
 /// @param nThe number of chars to skip.
 void skip(Lexer *lex, int n);
 
-/// @brief Initialize a lexer.
-/// @param fp       A pointer to the file to read from.
-/// @param filename The name of the file.
-/// @return The initialized lexer.
-Lexer *init_lexer(FILE *fp, const char *filename);
+/// @brief Skip whitespace starting at the current char until
+///        a non-whitespace char is found.
+///        The newline char is not considered whitespace.
+/// @param lex The lexer.
+void skip_whitespace(Lexer *lex);
+
+/// @brief Get the next token in the file.
+/// @param lex The lexer.
+/// @return The token found.
+Token next_tok(Lexer *lex);
 
 #endif // LEXER_H

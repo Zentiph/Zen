@@ -48,8 +48,10 @@ static void _push_pos(Lexer *lex)
    // push current (line, col) into history for unget()
    if (lex->_hist_len == LEX_KEEP_BACK)
    {
-      memmove(&lex->_hist_line[0], &lex->_hist_line[1], sizeof(int) * (LEX_KEEP_BACK - 1));
-      memmove(&lex->_hist_col[0], &lex->_hist_col[1], sizeof(int) * (LEX_KEEP_BACK - 1));
+      memmove(
+          &lex->_hist_line[0], &lex->_hist_line[1], sizeof(int) * (LEX_KEEP_BACK - 1));
+      memmove(
+          &lex->_hist_col[0], &lex->_hist_col[1], sizeof(int) * (LEX_KEEP_BACK - 1));
       lex->_hist_len--;
    }
    lex->_hist_line[lex->_hist_len] = lex->line;
@@ -101,7 +103,8 @@ static int _prime(Lexer *lex)
 {
    // reserve LEX_KEEP_BACK bytes for unget region at front
    memset(lex->buf, 0, LEX_KEEP_BACK);
-   size_t got = fread(lex->buf + LEX_KEEP_BACK, 1, LEX_BUF_SIZE - LEX_KEEP_BACK, lex->fp);
+   size_t got = fread(
+       lex->buf + LEX_KEEP_BACK, 1, LEX_BUF_SIZE - LEX_KEEP_BACK, lex->fp);
    lex->bytesRead = LEX_KEEP_BACK + got;
    lex->ptr = lex->buf + LEX_KEEP_BACK; // current char at first real byte
    return (int)got;
@@ -124,7 +127,7 @@ static const char *kw_tab[] = {
     "and",
     "or",
     "not",
-    NULL};
+    NULL}; // end of table marker
 
 Lexer *init_lexer(FILE *fp, const char *filename)
 {

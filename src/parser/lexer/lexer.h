@@ -63,56 +63,60 @@ typedef struct
    int _hist_len; // 0 to LEX_KEEP_BACK
 } Lexer;
 
-/// @brief All types of tokens that can be lexed.
+// Macro that makes the preprocessor generate an enum and
+// matching char* array for all token types.
+// Solution modified from Terrence M on stackoverflow:
+// https://stackoverflow.com/a/10966395
+#define _FOREACH_TOKEN(TOKEN) \
+   TOKEN(TOK_KW)              \
+   TOKEN(TOK_COMMENT)         \
+   TOKEN(TOK_ID)              \
+   TOKEN(TOK_NUM)             \
+   TOKEN(TOK_STR)             \
+   TOKEN(TOK_ASSIGN)          \
+   TOKEN(TOK_ADD)             \
+   TOKEN(TOK_SUB)             \
+   TOKEN(TOK_MUL)             \
+   TOKEN(TOK_DIV)             \
+   TOKEN(TOK_MOD)             \
+   TOKEN(TOK_ADD_ASSIGN)      \
+   TOKEN(TOK_SUB_ASSIGN)      \
+   TOKEN(TOK_MUL_ASSIGN)      \
+   TOKEN(TOK_DIV_ASSIGN)      \
+   TOKEN(TOK_MOD_ASSIGN)      \
+   TOKEN(TOK_AND)             \
+   TOKEN(TOK_OR)              \
+   TOKEN(TOK_NOT)             \
+   TOKEN(TOK_EQ)              \
+   TOKEN(TOK_NE)              \
+   TOKEN(TOK_LT)              \
+   TOKEN(TOK_GT)              \
+   TOKEN(TOK_LE)              \
+   TOKEN(TOK_GE)              \
+   TOKEN(TOK_LT_PAREN)        \
+   TOKEN(TOK_RT_PAREN)        \
+   TOKEN(TOK_LT_BRACK)        \
+   TOKEN(TOK_RT_BRACK)        \
+   TOKEN(TOK_LT_BRACE)        \
+   TOKEN(TOK_RT_BRACE)        \
+   TOKEN(TOK_ARROW)           \
+   TOKEN(TOK_DBL_ARROW)       \
+   TOKEN(TOK_DOT)             \
+   TOKEN(TOK_COMMA)           \
+   TOKEN(TOK_NEWLINE)         \
+   TOKEN(TOK_EOF)             \
+   TOKEN(TOK_INVALID)
+
+#define _GENERATE_ENUM(ENUM) ENUM,
+#define _GENERATE_STR(STR) #STR,
+
 typedef enum
 {
-   // variable size tokens
-   TOK_KW,
-   TOK_COMMENT,
-   TOK_ID,
-   TOK_NUM,
-   TOK_STR,
-   // operators
-   TOK_ASSIGN,
-   TOK_ADD,
-   TOK_SUB,
-   TOK_MUL,
-   TOK_DIV,
-   TOK_MOD,
-   TOK_ADD_ASSIGN,
-   TOK_SUB_ASSIGN,
-   TOK_MUL_ASSIGN,
-   TOK_DIV_ASSIGN,
-   TOK_MOD_ASSIGN,
-   // logic
-   TOK_AND,
-   TOK_OR,
-   TOK_NOT,
-   // comparison
-   TOK_EQ,
-   TOK_NE,
-   TOK_LT,
-   TOK_GT,
-   TOK_LE,
-   TOK_GE,
-   // containers
-   TOK_LT_PAREN,
-   TOK_RT_PAREN,
-   TOK_LT_BRACK,
-   TOK_RT_BRACK,
-   TOK_LT_BRACE,
-   TOK_RT_BRACE,
-   // arrows
-   TOK_ARROW,
-   TOK_DBL_ARROW,
-   // special cases
-   TOK_DOT,
-   TOK_COMMA,
-   TOK_NEWLINE,
-   TOK_EOF,
-   // none of the above
-   TOK_INVALID
+   _FOREACH_TOKEN(_GENERATE_ENUM)
 } TokenType;
+
+static const char *TOK_STR[] = {
+    _FOREACH_TOKEN(_GENERATE_STR)};
 
 /// @brief A token, containing its type and its string value.
 typedef struct

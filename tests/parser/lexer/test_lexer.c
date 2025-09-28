@@ -27,21 +27,21 @@
 #include "../zassert.h"
 #include "../../../src/parser/lexer/lexer.h"
 
+#define TEST_SKIP_WSP(lex, exp) test_skip_wsp_at(__FILE__, __LINE__, (lex), (exp))
+#define TEST_NEXT_TOK(lex, exp) test_next_tok_at(__FILE__, __LINE__, (lex), (exp))
 #define TOKEXP(t, s) ((Token){.type = (t), .val = (s), .len = ((s) ? strlen(s) : 0)})
 
-void test_skip_wsp(Lexer *lex, const int exp)
+static void test_skip_wsp_at(const char *file, int line, Lexer *lex, const int exp)
 {
-    ZA_ASSERT_TRUE(lex != NULL);
-
+    ZA_ASSERT_TRUE_AT(file, line, lex != NULL);
     skip_wsp(lex);
-    ZA_ASSERT_EQ_INT(cur_char(lex), exp);
+    ZA_ASSERT_EQ_INT_AT(file, line, cur_char(lex), exp);
 }
 
-void test_next_tok(Lexer *lex, Token exp)
+static void test_next_tok_at(const char *file, int line, Lexer *lex, Token exp)
 {
-    ZA_ASSERT_TRUE(lex != NULL);
-
-    ZA_ASSERT_EQ_CSTR(next_tok(lex).val, exp.val);
+    ZA_ASSERT_TRUE_AT(file, line, lex != NULL);
+    ZA_ASSERT_EQ_CSTR_AT(file, line, next_tok(lex).val, exp.val);
 }
 
 int main(int argc, char const *argv[])
@@ -114,33 +114,33 @@ int main(int argc, char const *argv[])
         return 1;
     }
 
-    test_skip_wsp(lex, 'i');
+    TEST_SKIP_WSP(lex, 'i');
     skip(lex, strlen("int")); // Skip the rest of the word "int"
-    test_skip_wsp(lex, 'x');
+    TEST_SKIP_WSP(lex, 'x');
     skip(lex, 1);
-    test_skip_wsp(lex, '=');
+    TEST_SKIP_WSP(lex, '=');
     skip(lex, 1);
-    test_skip_wsp(lex, '5');
+    TEST_SKIP_WSP(lex, '5');
     skip(lex, 1);
-    test_skip_wsp(lex, '\n');
+    TEST_SKIP_WSP(lex, '\n');
     skip(lex, 1);
-    test_skip_wsp(lex, 'p');
+    TEST_SKIP_WSP(lex, 'p');
 
     free(lex);
     lex = NULL;
     rewind(fp);
     lex = init_lexer(fp, filename);
 
-    test_next_tok(lex, TOKEXP(TOK_ID, "int"));
-    test_next_tok(lex, TOKEXP(TOK_ID, "x"));
-    test_next_tok(lex, TOKEXP(TOK_ASSIGN, "="));
-    test_next_tok(lex, TOKEXP(TOK_NUM, "5"));
-    test_next_tok(lex, TOKEXP(TOK_NEWLINE, "\n"));
-    test_next_tok(lex, TOKEXP(TOK_ID, "print"));
-    test_next_tok(lex, TOKEXP(TOK_LT_PAREN, "("));
-    test_next_tok(lex, TOKEXP(TOK_ID, "x"));
-    test_next_tok(lex, TOKEXP(TOK_RT_PAREN, ")"));
-    test_next_tok(lex, TOKEXP(TOK_EOF, ""));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "int"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "x"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ASSIGN, "="));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_NUM, "5"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_NEWLINE, "\n"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "print"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_LT_PAREN, "("));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "x"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_RT_PAREN, ")"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_EOF, ""));
 
     free(lex);
     lex = NULL;
@@ -160,79 +160,79 @@ int main(int argc, char const *argv[])
 
     lex = init_lexer(fp, filename);
 
-    test_skip_wsp(lex, 's');
+    TEST_SKIP_WSP(lex, 's');
     skip(lex, strlen("string"));
-    test_skip_wsp(lex, 'g');
+    TEST_SKIP_WSP(lex, 'g');
     skip(lex, strlen("greeting"));
-    test_skip_wsp(lex, '=');
+    TEST_SKIP_WSP(lex, '=');
     skip(lex, 1);
-    test_skip_wsp(lex, '"');
+    TEST_SKIP_WSP(lex, '"');
     skip(lex, strlen("\"Hello, world!\""));
-    test_skip_wsp(lex, '\n');
+    TEST_SKIP_WSP(lex, '\n');
     skip(lex, 1);
-    test_skip_wsp(lex, 'i');
+    TEST_SKIP_WSP(lex, 'i');
     skip(lex, strlen("if"));
-    test_skip_wsp(lex, 'g');
+    TEST_SKIP_WSP(lex, 'g');
     skip(lex, strlen("greeting.length"));
-    test_skip_wsp(lex, '>');
+    TEST_SKIP_WSP(lex, '>');
     skip(lex, 1);
-    test_skip_wsp(lex, '4');
+    TEST_SKIP_WSP(lex, '4');
     skip(lex, 1);
-    test_skip_wsp(lex, '{');
+    TEST_SKIP_WSP(lex, '{');
     skip(lex, 1);
-    test_skip_wsp(lex, '\n');
+    TEST_SKIP_WSP(lex, '\n');
     skip(lex, 1);
-    test_skip_wsp(lex, 'p');
+    TEST_SKIP_WSP(lex, 'p');
     skip(lex, strlen("print(greeting)"));
-    test_skip_wsp(lex, '\n');
+    TEST_SKIP_WSP(lex, '\n');
     skip(lex, 1);
-    test_skip_wsp(lex, '}');
+    TEST_SKIP_WSP(lex, '}');
     skip(lex, 1);
-    test_skip_wsp(lex, 'e');
+    TEST_SKIP_WSP(lex, 'e');
     skip(lex, strlen("else"));
-    test_skip_wsp(lex, '{');
+    TEST_SKIP_WSP(lex, '{');
     skip(lex, 1);
-    test_skip_wsp(lex, '\n');
+    TEST_SKIP_WSP(lex, '\n');
     skip(lex, 1);
-    test_skip_wsp(lex, 'p');
+    TEST_SKIP_WSP(lex, 'p');
     skip(lex, strlen("print(\"Greeting too short.\")"));
-    test_skip_wsp(lex, '\n');
+    TEST_SKIP_WSP(lex, '\n');
     skip(lex, 1);
-    test_skip_wsp(lex, '}');
+    TEST_SKIP_WSP(lex, '}');
 
     free(lex);
     lex = NULL;
     rewind(fp);
     lex = init_lexer(fp, filename);
 
-    test_next_tok(lex, TOKEXP(TOK_ID, "string"));
-    test_next_tok(lex, TOKEXP(TOK_ID, "greeting"));
-    test_next_tok(lex, TOKEXP(TOK_ASSIGN, "="));
-    test_next_tok(lex, TOKEXP(TOK_STR, "Hello, world!"));
-    test_next_tok(lex, TOKEXP(TOK_NEWLINE, "\n"));
-    test_next_tok(lex, TOKEXP(TOK_KW, "if"));
-    test_next_tok(lex, TOKEXP(TOK_ID, "greeting"));
-    test_next_tok(lex, TOKEXP(TOK_DOT, "."));
-    test_next_tok(lex, TOKEXP(TOK_ID, "length"));
-    test_next_tok(lex, TOKEXP(TOK_GT, ">"));
-    test_next_tok(lex, TOKEXP(TOK_NUM, "4"));
-    test_next_tok(lex, TOKEXP(TOK_LT_BRACE, "{"));
-    test_next_tok(lex, TOKEXP(TOK_NEWLINE, "\n"));
-    test_next_tok(lex, TOKEXP(TOK_ID, "print"));
-    test_next_tok(lex, TOKEXP(TOK_LT_PAREN, "("));
-    test_next_tok(lex, TOKEXP(TOK_ID, "greeting"));
-    test_next_tok(lex, TOKEXP(TOK_RT_PAREN, ")"));
-    test_next_tok(lex, TOKEXP(TOK_NEWLINE, "\n"));
-    test_next_tok(lex, TOKEXP(TOK_RT_BRACE, "}"));
-    test_next_tok(lex, TOKEXP(TOK_KW, "else"));
-    test_next_tok(lex, TOKEXP(TOK_LT_BRACE, "{"));
-    test_next_tok(lex, TOKEXP(TOK_NEWLINE, "\n"));
-    test_next_tok(lex, TOKEXP(TOK_ID, "print"));
-    test_next_tok(lex, TOKEXP(TOK_LT_PAREN, "("));
-    test_next_tok(lex, TOKEXP(TOK_STR, "Greeting too short."));
-    test_next_tok(lex, TOKEXP(TOK_RT_PAREN, ")"));
-    test_next_tok(lex, TOKEXP(TOK_NEWLINE, "\n"));
-    test_next_tok(lex, TOKEXP(TOK_RT_BRACE, "}"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "string"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "greeting"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ASSIGN, "="));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_STR, "Hello, world!"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_NEWLINE, "\n"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_KW, "if"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "greeting"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_DOT, "."));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "length"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_GT, ">"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_NUM, "4"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_LT_BRACE, "{"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_NEWLINE, "\n"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "print"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_LT_PAREN, "("));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "greeting"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_RT_PAREN, ")"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_NEWLINE, "\n"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_RT_BRACE, "}"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_KW, "else"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_LT_BRACE, "{"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_NEWLINE, "\n"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_ID, "print"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_LT_PAREN, "("));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_STR, "Greeting too short."));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_RT_PAREN, ")"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_NEWLINE, "\n"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_RT_BRACE, "}"));
 
     /////////////////////////////////////////////////////////////////////////////
     //                                 TESTING                                 //
@@ -242,6 +242,6 @@ int main(int argc, char const *argv[])
     free(lex);
     lex = NULL;
 
-    printf("Tests done\n");
-    return 0;
+    za_print_summary(stdout);
+    return za_exit_code();
 }

@@ -150,7 +150,7 @@ int main(int argc, char const *argv[])
     //                                 TESTING                                 //
     //                                 in2.zen                                 //
     /////////////////////////////////////////////////////////////////////////////
-    filename = "./tests/parser/input/in2.zen";
+    filename = "tests/parser/input/in2.zen";
     fp = fopen(filename, "r");
     if (!fp)
     {
@@ -233,6 +233,7 @@ int main(int argc, char const *argv[])
     TEST_NEXT_TOK(lex, TOKEXP(TOK_RT_PAREN, ")"));
     TEST_NEXT_TOK(lex, TOKEXP(TOK_NEWLINE, "\n"));
     TEST_NEXT_TOK(lex, TOKEXP(TOK_RT_BRACE, "}"));
+    TEST_NEXT_TOK(lex, TOKEXP(TOK_EOF, ""));
 
     /////////////////////////////////////////////////////////////////////////////
     //                                 TESTING                                 //

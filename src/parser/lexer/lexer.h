@@ -52,10 +52,13 @@ typedef struct
    /// @brief A pointer to the current char.
    char *ptr;
    /// @brief The number of valid bytes in buf.
-   size_t bytesRead;
+   size_t bytes_read;
 
    int line;
    int col;
+
+   char tbuf[TOK_SIZE];
+   size_t tlen;
 
    // position history so unget() can restore line/col
    int _hist_line[LEX_KEEP_BACK];
@@ -110,19 +113,23 @@ typedef struct
 #define _GENERATE_ENUM(ENUM) ENUM,
 #define _GENERATE_STR(STR) #STR,
 
+/// @brief An enum of token types that can be lexed.
 typedef enum
 {
    _FOREACH_TOKEN(_GENERATE_ENUM)
 } TokenType;
 
-static const char *TOK_STR[] = {
+/// @brief An array of string representations
+///        of enum values stored at their numeric value.
+static const char *TOK_TO_STR[] = {
     _FOREACH_TOKEN(_GENERATE_STR)};
 
 /// @brief A token, containing its type and its string value.
 typedef struct
 {
    TokenType type;
-   char val[TOK_SIZE];
+   const char *val;
+   size_t len;
 } Token;
 
 /// @brief Initialize a lexer.
@@ -162,7 +169,7 @@ void skip(Lexer *lex, int n);
 ///        a non-whitespace char is found.
 ///        The newline char is not considered whitespace.
 /// @param lex The lexer.
-void skip_whitespace(Lexer *lex);
+void skip_wsp(Lexer *lex);
 
 /// @brief Get the next token in the file.
 /// @param lex The lexer.

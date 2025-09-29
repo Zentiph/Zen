@@ -25,6 +25,7 @@
 
 #define ZA_VERBOSE
 #include "../zassert.h"
+
 #include "../../../src/parser/lexer/lexer.h"
 
 #define TEST_SKIP_WSP(lex, exp) test_skip_wsp_at(__FILE__, __LINE__, (lex), (exp))

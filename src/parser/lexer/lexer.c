@@ -130,6 +130,21 @@ static inline void tbuf_put2(lexer_t *lex, int a, int b)
    tbuf_put(lex, b);
 }
 
+static inline token_t make_tok(Token type, const char *buf, size_t len)
+{
+   token_t tok = {.type = type, .lexeme = NULL, .len = len};
+   if (len)
+   {
+      tok.lexeme = malloc(len + 1);
+      if (tok.lexeme)
+      {
+         memcpy(tok.lexeme, buf, len);
+         tok.lexeme[len] = '\0';
+      }
+   }
+   return tok;
+}
+
 // ----- public api -----
 const char *kw_tab[] = {
     "if",
@@ -280,7 +295,6 @@ void lex_skip_wsp(lexer_t *lex)
 
 token_t lex_next(lexer_t *lex)
 {
-   token_t tok;
    tbuf_reset(lex);
 
    lex_skip_wsp(lex);
@@ -288,10 +302,7 @@ token_t lex_next(lexer_t *lex)
    int cc = lex_cur(lex);
    if (cc == EOF)
    {
-      tok.type = TOK_EOF;
-      tok.lexeme = lex->tbuf;
-      tok.len = 0;
-      return tok;
+      return make_tok(TOK_EOF, lex->tbuf, lex->tlen);
    }
 
    char cur = (char)cc;
@@ -299,21 +310,17 @@ token_t lex_next(lexer_t *lex)
    // single-line comments
    if (cur == '/' && lex_peek(lex) == '/')
    {
-      tok.type = TOK_COMMENT;
       lex_skip(lex, 2); // lex_skip "//"
 
       while (lex_cur(lex) != '\n' && lex_cur(lex) != EOF)
          tbuf_put(lex, lex_adv(lex));
 
-      tok.lexeme = lex->tbuf;
-      tok.len = lex->tlen;
-      return tok;
+      return make_tok(TOK_COMMENT, lex->tbuf, lex->tlen);
    }
 
    // multi-line comments
    if (cur == '/' && lex_peek(lex) == '.')
    {
-      tok.type = TOK_COMMENT;
       lex_skip(lex, 2); // lex_skip opening "/."
 
       while (true)
@@ -330,9 +337,7 @@ token_t lex_next(lexer_t *lex)
          tbuf_put(lex, lex_adv(lex));
       }
 
-      tok.lexeme = lex->tbuf;
-      tok.len = lex->tlen;
-      return tok;
+      return make_tok(TOK_COMMENT, lex->tbuf, lex->tlen);
    }
 
    // keywords and identifiers
@@ -352,26 +357,18 @@ token_t lex_next(lexer_t *lex)
       {
          if (strcmp(lex->tbuf, kw_tab[i]) == 0)
          {
-            tok.type = TOK_KW;
-            tok.lexeme = lex->tbuf;
-            tok.len = lex->tlen;
-            return tok;
+            return make_tok(TOK_KW, lex->tbuf, lex->tlen);
          }
       }
 
-      tok.type = TOK_ID;
-      tok.lexeme = lex->tbuf;
-      tok.len = lex->tlen;
-      return tok;
+      return make_tok(TOK_ID, lex->tbuf, lex->tlen);
    }
 
    // string literals (quotes not included in token)
    if (cur == '"' || cur == '\'')
    {
       char quote = cur; // store quote type for consistency
-      tok.type = TOK_STR;
-
-      lex_adv(lex); // consume opening quote
+      lex_adv(lex);     // consume opening quote
 
       for (;;)
       {
@@ -420,9 +417,7 @@ token_t lex_next(lexer_t *lex)
          }
       }
 
-      tok.lexeme = lex->tbuf;
-      tok.len = lex->tlen;
-      return tok;
+      return make_tok(TOK_STR, lex->tbuf, lex->tlen);
    }
 
    // number literals and dot
@@ -431,15 +426,11 @@ token_t lex_next(lexer_t *lex)
       // dot without surrounding digits, dot token
       if (cur == '.' && !isdigit((unsigned char)lex_peek(lex)))
       {
-         tok.type = TOK_DOT;
          tbuf_put(lex, '.');
          lex_adv(lex);
-         tok.lexeme = lex->tbuf;
-         tok.len = 1;
-         return tok;
+         return make_tok(TOK_DOT, lex->tbuf, lex->tlen);
       }
 
-      tok.type = TOK_NUM;
       bool dot_seen = (cur == '.');
       while (isdigit((unsigned char)lex_cur(lex)) || lex_cur(lex) == '.')
       {
@@ -456,9 +447,7 @@ token_t lex_next(lexer_t *lex)
          lex_adv(lex);
       }
 
-      tok.lexeme = lex->tbuf;
-      tok.len = lex->tlen;
-      return tok;
+      return make_tok(TOK_NUM, lex->tbuf, lex->tlen);
    }
 
    // arrows
@@ -467,13 +456,10 @@ token_t lex_next(lexer_t *lex)
       int next = lex_peek(lex);
       if (next == '>')
       {
-         tok.type = TOK_ARROW;
          tbuf_put2(lex, '-', '>');
          lex_adv(lex);
          lex_adv(lex);
-         tok.lexeme = lex->tbuf;
-         tok.len = 2;
-         return tok;
+         return make_tok(TOK_ARROW, lex->tbuf, lex->tlen);
       }
    }
    if (cur == '=')
@@ -481,13 +467,10 @@ token_t lex_next(lexer_t *lex)
       int next = lex_peek(lex);
       if (next == '>')
       {
-         tok.type = TOK_DBL_ARROW;
          tbuf_put2(lex, '=', '>');
          lex_adv(lex);
          lex_adv(lex);
-         tok.lexeme = lex->tbuf;
-         tok.len = 2;
-         return tok;
+         return make_tok(TOK_DBL_ARROW, lex->tbuf, lex->tlen);
       }
    }
 
@@ -497,57 +480,57 @@ token_t lex_next(lexer_t *lex)
       // == or != or <= or >=
       if (lex_peek(lex) == '=')
       {
-         switch (cur)
-         {
-         case '=':
-            tok.type = TOK_EQ;
-            break;
-         case '!':
-            tok.type = TOK_NE;
-            break;
-         case '<':
-            tok.type = TOK_LE;
-            break;
-         case '>':
-            tok.type = TOK_GE;
-            break;
-         default:
-            tok.type = TOK_INVALID;
-            break;
-         }
-
          tbuf_put2(lex, cur, '=');
          lex_adv(lex);
          lex_adv(lex);
-         tok.lexeme = lex->tbuf;
-         tok.len = 2;
-         return tok;
-      }
 
-      switch (cur)
-      {
-      case '=':
-         tok.type = TOK_ASSIGN;
-         break;
-      case '!':
-         tok.type = TOK_NOT;
-         break;
-      case '<':
-         tok.type = TOK_LT;
-         break;
-      case '>':
-         tok.type = TOK_GT;
-         break;
-      default:
-         tok.type = TOK_INVALID;
-         break;
+         Token type;
+         switch (cur)
+         {
+         case '=':
+            type = TOK_EQ;
+            break;
+         case '!':
+            type = TOK_NE;
+            break;
+         case '<':
+            type = TOK_LE;
+            break;
+         case '>':
+            type = TOK_GE;
+            break;
+         default:
+            type = TOK_INVALID;
+            break;
+         }
+
+         return make_tok(type, lex->tbuf, lex->tlen);
       }
 
       tbuf_put(lex, cur);
       lex_adv(lex);
-      tok.lexeme = lex->tbuf;
-      tok.len = 1;
-      return tok;
+
+      Token type;
+      switch (cur)
+      {
+      case '=':
+         type = TOK_ASSIGN;
+         break;
+      case '!':
+         type = TOK_NOT;
+         break;
+      case '<':
+         type = TOK_LT;
+         break;
+      case '>':
+         type = TOK_GT;
+         break;
+      default:
+         type = TOK_INVALID;
+         break;
+      }
+
+      return make_tok(type, lex->tbuf, lex->tlen);
    }
 
    // binary ops
@@ -556,102 +539,102 @@ token_t lex_next(lexer_t *lex)
       // in-place binary op
       if (lex_peek(lex) == '=')
       {
-         switch (cur)
-         {
-         case '+':
-            tok.type = TOK_ADD_ASSIGN;
-            break;
-         case '-':
-            tok.type = TOK_SUB_ASSIGN;
-            break;
-         case '*':
-            tok.type = TOK_MUL_ASSIGN;
-            break;
-         case '/':
-            tok.type = TOK_DIV_ASSIGN;
-            break;
-         case '%':
-            tok.type = TOK_MOD_ASSIGN;
-            break;
-         default:
-            tok.type = TOK_INVALID;
-            break;
-         }
-
          tbuf_put2(lex, cur, '=');
          lex_adv(lex);
          lex_adv(lex);
-         tok.lexeme = lex->tbuf;
-         tok.len = 2;
-         return tok;
+
+         Token type;
+         switch (cur)
+         {
+         case '+':
+            type = TOK_ADD_ASSIGN;
+            break;
+         case '-':
+            type = TOK_SUB_ASSIGN;
+            break;
+         case '*':
+            type = TOK_MUL_ASSIGN;
+            break;
+         case '/':
+            type = TOK_DIV_ASSIGN;
+            break;
+         case '%':
+            type = TOK_MOD_ASSIGN;
+            break;
+         default:
+            type = TOK_INVALID;
+            break;
+         }
+
+         return make_tok(type, lex->tbuf, lex->tlen);
       }
 
       // regular binary op
+      tbuf_put(lex, cur);
+      lex_adv(lex);
+
+      Token type;
       switch (cur)
       {
       case '+':
-         tok.type = TOK_ADD;
+         type = TOK_ADD;
          break;
       case '-':
-         tok.type = TOK_SUB;
+         type = TOK_SUB;
          break;
       case '*':
-         tok.type = TOK_MUL;
+         type = TOK_MUL;
          break;
       case '/':
-         tok.type = TOK_DIV;
+         type = TOK_DIV;
          break;
       case '%':
-         tok.type = TOK_MOD;
+         type = TOK_MOD;
          break;
       default:
-         tok.type = TOK_INVALID;
+         type = TOK_INVALID;
          break;
       }
 
-      tbuf_put(lex, cur);
-      lex_adv(lex);
-      tok.lexeme = lex->tbuf;
-      tok.len = 1;
-      return tok;
+      return make_tok(type, lex->tbuf, lex->tlen);
    }
 
    // single chars
+   tbuf_put(lex, cur);
+   lex_adv(lex);
+
+   Token type;
    switch (cur)
    {
    case ',':
-      tok.type = TOK_COMMA;
+      type = TOK_COMMA;
       break;
    case '(':
-      tok.type = TOK_LT_PAREN;
+      type = TOK_LT_PAREN;
       break;
    case ')':
-      tok.type = TOK_RT_PAREN;
+      type = TOK_RT_PAREN;
       break;
    case '[':
-      tok.type = TOK_LT_BRACK;
+      type = TOK_LT_BRACK;
       break;
    case ']':
-      tok.type = TOK_RT_BRACK;
+      type = TOK_RT_BRACK;
       break;
    case '{':
-      tok.type = TOK_LT_BRACE;
+      type = TOK_LT_BRACE;
       break;
    case '}':
-      tok.type = TOK_RT_BRACE;
+      type = TOK_RT_BRACE;
       break;
    case '\n':
    case ';':
-      tok.type = TOK_NEWLINE;
+      type = TOK_NEWLINE;
       break;
    default:
-      tok.type = TOK_INVALID;
+      type = TOK_INVALID;
       break;
    }
 
-   tbuf_put(lex, cur);
-   lex_adv(lex);
-   tok.lexeme = lex->tbuf;
-   tok.len = 1;
-   return tok;
+   return make_tok(type, lex->tbuf, lex->tlen);
 }

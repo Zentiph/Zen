@@ -128,10 +128,18 @@ const char *TOK_TO_STR[] = {
 typedef struct
 {
    Token type;
-   /// This pointer is NULL for tokens without payload (operators, NEWLINE, etc).
-   const char *lexeme;
+   char *lexeme;
    size_t len;
 } token_t;
+
+/// @brief Free a token from memory.
+/// @param tok  The token to free.
+static inline void tok_free(token_t *tok)
+{
+   free(tok->lexeme);
+   tok->lexeme = NULL;
+   tok->len = 0;
+}
 
 /// @brief Initialize a lexer.
 /// @param fp       A pointer to the file to read from.

@@ -22,25 +22,25 @@
 
 #include "ast.h"
 
-ASTNode *create_num_node(float val)
+ast_node_t *ast_init_num(float val)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_NUM;
    node->num.val = val;
    return node;
 }
 
-ASTNode *create_id_node(char *name)
+ast_node_t *ast_init_id(char *name)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_ID;
    node->id.name = name;
    return node;
 }
 
-ASTNode *create_binary_node(ASTNode *lhs, TokenType op, ASTNode *rhs)
+ast_node_t *ast_init_binary(ast_node_t *lhs, Token op, ast_node_t *rhs)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_BINARY;
    node->binary.lhs = lhs;
    node->binary.op = op;
@@ -48,18 +48,18 @@ ASTNode *create_binary_node(ASTNode *lhs, TokenType op, ASTNode *rhs)
    return node;
 }
 
-ASTNode *create_unary_node(TokenType op, ASTNode *operand)
+ast_node_t *ast_init_unary(Token op, ast_node_t *operand)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_UNARY;
    node->unary.op = op;
    node->unary.operand = operand;
    return node;
 }
 
-ASTNode *create_if_node(ASTNode *cond, ASTNode *then_block, ASTNode *else_block)
+ast_node_t *ast_init_if(ast_node_t *cond, ast_node_t *then_block, ast_node_t *else_block)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_IF;
    node->if_stmt.cond = cond;
    node->if_stmt.then_block = then_block;
@@ -67,19 +67,19 @@ ASTNode *create_if_node(ASTNode *cond, ASTNode *then_block, ASTNode *else_block)
    return node;
 }
 
-ASTNode *create_while_node(ASTNode *cond, ASTNode *body)
+ast_node_t *ast_init_while(ast_node_t *cond, ast_node_t *body)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_WHILE;
    node->while_stmt.cond = cond;
    node->while_stmt.body = body;
    return node;
 }
 
-ASTNode *create_func_def_node(char *name, char **params,
-                              int num_params, ASTNode *body)
+ast_node_t *ast_init_func_def(char *name, char **params,
+                              int num_params, ast_node_t *body)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_FUNC_DEF;
    node->func_def.name = name;
    node->func_def.params = params;
@@ -88,17 +88,17 @@ ASTNode *create_func_def_node(char *name, char **params,
    return node;
 }
 
-ASTNode *create_return_node(ASTNode *val)
+ast_node_t *ast_init_return(ast_node_t *val)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_RETURN;
    node->return_stmt.val = val;
    return node;
 }
 
-ASTNode *create_func_call_node(char *name, ASTNode **args, int num_args)
+ast_node_t *ast_init_func_call(char *name, ast_node_t **args, int num_args)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_FUNC_CALL;
    node->func_call.name = name;
    node->func_call.args = args;
@@ -106,18 +106,18 @@ ASTNode *create_func_call_node(char *name, ASTNode **args, int num_args)
    return node;
 }
 
-ASTNode *create_block_node(ASTNode **stmts, int num_stmts)
+ast_node_t *ast_init_block(ast_node_t **stmts, int num_stmts)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_BLOCK;
    node->block.stmts = stmts;
    node->block.num_stmts = num_stmts;
    return node;
 }
 
-ASTNode *create_assign_node(char *name, ASTNode *val)
+ast_node_t *ast_init_assign(char *name, ast_node_t *val)
 {
-   ASTNode *node = (ASTNode *)malloc(sizeof(ASTNode));
+   ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_ASSIGN;
    node->assign.name = name;
    node->assign.val = val;

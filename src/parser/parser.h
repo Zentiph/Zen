@@ -18,55 +18,55 @@
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ///
 
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef ZLANG_PARSER_H
+#define ZLANG_PARSER_H
 
 #include "ast.h"
 
 /// @brief A representation of the parser's state.
 typedef struct
 {
-   Lexer *lex;
-   Token cur;
-   Token prev;
-} Parser;
+   lexer_t *lex;
+   token_t cur;
+   token_t prev;
+} parser_t;
 
 /// @brief Initialize a parser.
 /// @param lex The lexer to use.
 /// @return The initialized parser.
-Parser *init_parser(Lexer *lex);
+parser_t *parser_init(lexer_t *lex);
 
 /// @brief Advance to the next token.
 /// @param parser The parser.
-void advance(Parser *parser);
+void parser_adv(parser_t *parser);
 
 /// @brief Check if the current token matches the given token type.
 ///        If so, advance and return true. Otherwise, return false.
 /// @param parser   The parser.
 /// @param tok_type The token type to match.
 /// @return Whether the current token's type and expected type match.
-bool match(Parser *parser, TokenType tok_type);
+bool parser_match(parser_t *parser, Token tok_type);
 
 /// @brief Determine if the current token matches given token type without advancing.
 /// @param parser   The parser.
 /// @param tok_type The token type to check.
 /// @return Whether the current token's type and expected type match.
-bool check(Parser *parser, TokenType tok_type);
+bool parser_check(parser_t *parser, Token tok_type);
 
 /// @brief Similar to match(), but with an error message.
 /// @param parser   The parser.
 /// @param tok_type The token type to check.
 /// @param msg      The error message.
-void expect(Parser *parser, TokenType tok_type, const char *msg);
+void parser_expect(parser_t *parser, Token tok_type, const char *msg);
 
 /// @brief Peek at the next token.
 /// @param lex The lexer.
 /// @return The next token.
-Token peek_tok(Lexer *lex);
+token_t parser_peek(lexer_t *lex);
 
 /// @brief Report a syntax error to the parser.
 /// @param parser The parser.
 /// @param msg    The error message.
-void error(Parser *parser, const char *msg);
+void parser_error(parser_t *parser, const char *msg);
 
-#endif // PARSER_H
+#endif // ZLANG_PARSER_H

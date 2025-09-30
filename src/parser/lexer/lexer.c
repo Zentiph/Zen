@@ -25,31 +25,31 @@
 #define MIN_(a, b) ((a) < (b) ? (a) : (b))
 
 // ----- internals -----
-static inline bool buf_full(const Lexer *lex)
+static inline bool buf_full(const lexer_t *lex)
 {
    return lex->ptr >= lex->buf + lex->bytes_read;
 }
 
-static inline size_t idx(const Lexer *lex)
+static inline size_t idx(const lexer_t *lex)
 {
    return (size_t)(lex->ptr - lex->buf);
 }
 
-static inline size_t ahead(const Lexer *lex)
+static inline size_t ahead(const lexer_t *lex)
 {
    // bytes in the buffer after current char
    return (size_t)(lex->buf + lex->bytes_read - lex->ptr - 1);
 }
 
-static void push_pos(Lexer *lex)
+static void push_pos(lexer_t *lex)
 {
-   // push current (line, col) into history for unget()
-   if (lex->_hist_len == LEX_KEEP_BACK)
+   // push current (line, col) into history for lex_unget()
+   if (lex->_hist_len == ZLANG_LEX_KEEP_BK)
    {
       memmove(
-          &lex->_hist_line[0], &lex->_hist_line[1], sizeof(int) * (LEX_KEEP_BACK - 1));
+          &lex->_hist_line[0], &lex->_hist_line[1], sizeof(int) * (ZLANG_LEX_KEEP_BK - 1));
       memmove(
-          &lex->_hist_col[0], &lex->_hist_col[1], sizeof(int) * (LEX_KEEP_BACK - 1));
+          &lex->_hist_col[0], &lex->_hist_col[1], sizeof(int) * (ZLANG_LEX_KEEP_BK - 1));
       lex->_hist_len--;
    }
    lex->_hist_line[lex->_hist_len] = lex->line;
@@ -57,35 +57,35 @@ static void push_pos(Lexer *lex)
    lex->_hist_len++;
 }
 
-static int slide_refill(Lexer *lex)
+static int slide_refill(lexer_t *lex)
 {
-   // carry up to LEX_KEEP_BACK bytes ending at current char
+   // carry up to ZLANG_LEX_KEEP_BK bytes ending at current char
    // tail all unread bytes after current char
    size_t i = idx(lex);
-   size_t back = MIN_(LEX_KEEP_BACK, i + 1); // bytes to keep
-   size_t tail = lex->bytes_read - (i + 1);  // unread after current
+   size_t back = MIN_(ZLANG_LEX_KEEP_BK, i + 1); // bytes to keep
+   size_t tail = lex->bytes_read - (i + 1);      // unread after current
 
-   // move back so the current char ends up at index LEX_KEEP_BACK
+   // move back so the current char ends up at index ZLANG_LEX_KEEP_BK
    if (back)
-      memmove(lex->buf + (LEX_KEEP_BACK + 1 - back), lex->buf + (i + 1 - back), back);
+      memmove(lex->buf + (ZLANG_LEX_KEEP_BK + 1 - back), lex->buf + (i + 1 - back), back);
 
-   // move tail right after current (at LEX_KEEP_BACK + 1)
+   // move tail right after current (at ZLANG_LEX_KEEP_BK + 1)
    if (tail)
-      memmove(lex->buf + (LEX_KEEP_BACK + 1), lex->buf + (i + 1), tail);
+      memmove(lex->buf + (ZLANG_LEX_KEEP_BK + 1), lex->buf + (i + 1), tail);
 
    // update ptr
-   lex->ptr = lex->buf + LEX_KEEP_BACK;
+   lex->ptr = lex->buf + ZLANG_LEX_KEEP_BK;
 
    // fill rest of buffer
-   size_t filled = LEX_KEEP_BACK + 1 + tail;
-   size_t space = (LEX_BUF_SIZE > filled) ? (LEX_BUF_SIZE - filled) : 0;
+   size_t filled = ZLANG_LEX_KEEP_BK + 1 + tail;
+   size_t space = (ZLANG_LEX_BUFSIZ > filled) ? (ZLANG_LEX_BUFSIZ - filled) : 0;
    size_t got = (space > 0) ? fread(lex->buf + filled, 1, space, lex->fp) : 0;
 
    lex->bytes_read = filled + got;
    return (int)got;
 }
 
-static bool ensure_ahead(Lexer *lex, size_t need)
+static bool ensure_ahead(lexer_t *lex, size_t need)
 {
    if (ahead(lex) >= need)
       return true;
@@ -97,41 +97,41 @@ static bool ensure_ahead(Lexer *lex, size_t need)
    return ahead(lex) >= need;
 }
 
-static int prime(Lexer *lex)
+static int prime(lexer_t *lex)
 {
-   // reserve LEX_KEEP_BACK bytes for unget region at front
-   memset(lex->buf, 0, LEX_KEEP_BACK);
+   // reserve ZLANG_LEX_KEEP_BK bytes for lex_unget region at front
+   memset(lex->buf, 0, ZLANG_LEX_KEEP_BK);
    size_t got = fread(
-       lex->buf + LEX_KEEP_BACK, 1, LEX_BUF_SIZE - LEX_KEEP_BACK, lex->fp);
-   lex->bytes_read = LEX_KEEP_BACK + got;
-   lex->ptr = lex->buf + LEX_KEEP_BACK; // current char at first real byte
+       lex->buf + ZLANG_LEX_KEEP_BK, 1, ZLANG_LEX_BUFSIZ - ZLANG_LEX_KEEP_BK, lex->fp);
+   lex->bytes_read = ZLANG_LEX_KEEP_BK + got;
+   lex->ptr = lex->buf + ZLANG_LEX_KEEP_BK; // current char at first real byte
    return (int)got;
 }
 
-static inline void tbuf_reset(Lexer *lex)
+static inline void tbuf_reset(lexer_t *lex)
 {
    lex->tlen = 0;
-   if (TOK_SIZE > 0)
+   if (ZLANG_TOK_SIZ > 0)
       lex->tbuf[0] = '\0';
 }
 
-static inline void tbuf_put(Lexer *lex, int ch)
+static inline void tbuf_put(lexer_t *lex, int ch)
 {
-   if (lex->tlen + 1 < TOK_SIZE) // leave room for NULL
+   if (lex->tlen + 1 < ZLANG_TOK_SIZ) // leave room for NULL
    {
       lex->tbuf[lex->tlen++] = (char)ch;
       lex->tbuf[lex->tlen] = '\0';
    }
 }
 
-static inline void tbuf_put2(Lexer *lex, int a, int b)
+static inline void tbuf_put2(lexer_t *lex, int a, int b)
 {
    tbuf_put(lex, a);
    tbuf_put(lex, b);
 }
 
 // ----- public api -----
-static const char *kw_tab[] = {
+const char *kw_tab[] = {
     "if",
     "else",
     "while",
@@ -149,9 +149,9 @@ static const char *kw_tab[] = {
     "not",
     NULL}; // end of table marker
 
-Lexer *init_lexer(FILE *fp, const char *filename)
+lexer_t *lex_init(FILE *fp, const char *filename)
 {
-   Lexer *lex = (Lexer *)malloc(sizeof(Lexer));
+   lexer_t *lex = (lexer_t *)malloc(sizeof(lexer_t));
    if (!lex)
       return NULL;
 
@@ -162,14 +162,14 @@ Lexer *init_lexer(FILE *fp, const char *filename)
    lex->line = 1;
    lex->col = 1;
    lex->tlen = 0;
-   if (TOK_SIZE > 0)
+   if (ZLANG_TOK_SIZ > 0)
       lex->tbuf[0] = '\0';
    lex->_hist_len = 0;
 
    return lex;
 }
 
-int cur_char(Lexer *lex)
+int lex_cur(lexer_t *lex)
 {
    if (lex->bytes_read == 0)
       if (prime(lex) == 0)
@@ -179,17 +179,17 @@ int cur_char(Lexer *lex)
    return (unsigned char)*lex->ptr;
 }
 
-int peek(Lexer *lex)
+int lex_peek(lexer_t *lex)
 {
    if (lex->bytes_read == 0)
       if (prime(lex) == 0)
          return EOF;
-   if (!ensure_ahead(lex, LEX_LOOKAHEAD))
+   if (!ensure_ahead(lex, ZLANG_LEX_LOOKAHEAD))
       return EOF;
    return (unsigned char)*(lex->ptr + 1);
 }
 
-int advance(Lexer *lex)
+int lex_adv(lexer_t *lex)
 {
    if (lex->bytes_read == 0)
       if (prime(lex) == 0)
@@ -201,7 +201,7 @@ int advance(Lexer *lex)
       // subsequent calls see EOF
       if (!buf_full(lex))
       {
-         // save pos for possible unget()
+         // save pos for possible lex_unget()
          push_pos(lex);
 
          unsigned char cur = (unsigned char)*lex->ptr;
@@ -222,7 +222,7 @@ int advance(Lexer *lex)
    }
 
    // normal path, we have lookahead
-   // save current pos for possible unget()
+   // save current pos for possible lex_unget()
    push_pos(lex);
 
    unsigned char next = (unsigned char)*(++lex->ptr);
@@ -237,7 +237,7 @@ int advance(Lexer *lex)
    return (int)next;
 }
 
-bool unget(Lexer *lex)
+bool lex_unget(lexer_t *lex)
 {
    if (lex->_hist_len <= 0)
       return false; // nothing to restore
@@ -254,42 +254,42 @@ bool unget(Lexer *lex)
    return true;
 }
 
-void skip(Lexer *lex, int n)
+void lex_skip(lexer_t *lex, int n)
 {
    if (n <= 0)
       return;
    while (n-- > 0)
-      if (advance(lex) == EOF)
+      if (lex_adv(lex) == EOF)
          return;
 }
 
-void skip_wsp(Lexer *lex)
+void lex_skip_wsp(lexer_t *lex)
 {
    for (;;)
    {
-      int cur = cur_char(lex);
+      int cur = lex_cur(lex);
       if (cur == EOF)
          return;
       if (!isspace((unsigned char)cur))
          return;
       if (cur == '\n')
          return; // preserve newline as a token
-      advance(lex);
+      lex_adv(lex);
    }
 }
 
-Token next_tok(Lexer *lex)
+token_t lex_next(lexer_t *lex)
 {
-   Token tok;
+   token_t tok;
    tbuf_reset(lex);
 
-   skip_wsp(lex);
+   lex_skip_wsp(lex);
 
-   int cc = cur_char(lex);
+   int cc = lex_cur(lex);
    if (cc == EOF)
    {
       tok.type = TOK_EOF;
-      tok.val = lex->tbuf;
+      tok.lexeme = lex->tbuf;
       tok.len = 0;
       return tok;
    }
@@ -297,40 +297,40 @@ Token next_tok(Lexer *lex)
    char cur = (char)cc;
 
    // single-line comments
-   if (cur == '/' && peek(lex) == '/')
+   if (cur == '/' && lex_peek(lex) == '/')
    {
       tok.type = TOK_COMMENT;
-      skip(lex, 2); // skip "//"
+      lex_skip(lex, 2); // lex_skip "//"
 
-      while (cur_char(lex) != '\n' && cur_char(lex) != EOF)
-         tbuf_put(lex, advance(lex));
+      while (lex_cur(lex) != '\n' && lex_cur(lex) != EOF)
+         tbuf_put(lex, lex_adv(lex));
 
-      tok.val = lex->tbuf;
+      tok.lexeme = lex->tbuf;
       tok.len = lex->tlen;
       return tok;
    }
 
    // multi-line comments
-   if (cur == '/' && peek(lex) == '.')
+   if (cur == '/' && lex_peek(lex) == '.')
    {
       tok.type = TOK_COMMENT;
-      skip(lex, 2); // skip opening "/."
+      lex_skip(lex, 2); // lex_skip opening "/."
 
       while (true)
       {
          // end of comment
-         if (cur_char(lex) == '.' && peek(lex) == '/')
+         if (lex_cur(lex) == '.' && lex_peek(lex) == '/')
          {
-            skip(lex, 2); // skip closing "./"
+            lex_skip(lex, 2); // lex_skip closing "./"
             break;
          }
-         if (cur_char(lex) == EOF)
+         if (lex_cur(lex) == EOF)
             break;
 
-         tbuf_put(lex, advance(lex));
+         tbuf_put(lex, lex_adv(lex));
       }
 
-      tok.val = lex->tbuf;
+      tok.lexeme = lex->tbuf;
       tok.len = lex->tlen;
       return tok;
    }
@@ -340,11 +340,11 @@ Token next_tok(Lexer *lex)
    {
       for (;;)
       {
-         int c = cur_char(lex);
+         int c = lex_cur(lex);
          if (!(isalnum((unsigned char)c) || c == '_'))
             break;
-         tbuf_put(lex, cur_char(lex));
-         advance(lex);
+         tbuf_put(lex, lex_cur(lex));
+         lex_adv(lex);
       }
 
       // check for keyword
@@ -353,14 +353,14 @@ Token next_tok(Lexer *lex)
          if (strcmp(lex->tbuf, kw_tab[i]) == 0)
          {
             tok.type = TOK_KW;
-            tok.val = lex->tbuf;
+            tok.lexeme = lex->tbuf;
             tok.len = lex->tlen;
             return tok;
          }
       }
 
       tok.type = TOK_ID;
-      tok.val = lex->tbuf;
+      tok.lexeme = lex->tbuf;
       tok.len = lex->tlen;
       return tok;
    }
@@ -371,23 +371,23 @@ Token next_tok(Lexer *lex)
       char quote = cur; // store quote type for consistency
       tok.type = TOK_STR;
 
-      advance(lex); // consume opening quote
+      lex_adv(lex); // consume opening quote
 
       for (;;)
       {
-         int ch = cur_char(lex);
+         int ch = lex_cur(lex);
          if (ch == EOF || ch == '\n')
             break; // unterminated
          if (ch == quote)
          {
-            advance(lex); // consume closing quote
+            lex_adv(lex); // consume closing quote
             break;
          }
 
          if (ch == '\\')
          {
-            advance(lex); // consume '\'
-            char esc = advance(lex);
+            lex_adv(lex); // consume '\'
+            char esc = lex_adv(lex);
             switch (esc)
             {
             case 'n':
@@ -411,16 +411,16 @@ Token next_tok(Lexer *lex)
                tbuf_put(lex, esc);
                break;
             }
-            advance(lex); // move past escaped char
+            lex_adv(lex); // move past escaped char
          }
          else
          {
             tbuf_put(lex, ch);
-            advance(lex);
+            lex_adv(lex);
          }
       }
 
-      tok.val = lex->tbuf;
+      tok.lexeme = lex->tbuf;
       tok.len = lex->tlen;
       return tok;
    }
@@ -429,21 +429,21 @@ Token next_tok(Lexer *lex)
    if (isdigit((unsigned char)cur) || cur == '.')
    {
       // dot without surrounding digits, dot token
-      if (cur == '.' && !isdigit((unsigned char)peek(lex)))
+      if (cur == '.' && !isdigit((unsigned char)lex_peek(lex)))
       {
          tok.type = TOK_DOT;
          tbuf_put(lex, '.');
-         advance(lex);
-         tok.val = lex->tbuf;
+         lex_adv(lex);
+         tok.lexeme = lex->tbuf;
          tok.len = 1;
          return tok;
       }
 
       tok.type = TOK_NUM;
       bool dot_seen = (cur == '.');
-      while (isdigit((unsigned char)cur_char(lex)) || cur_char(lex) == '.')
+      while (isdigit((unsigned char)lex_cur(lex)) || lex_cur(lex) == '.')
       {
-         int ch = cur_char(lex);
+         int ch = lex_cur(lex);
          if (ch == '.')
          {
             if (!dot_seen)
@@ -453,10 +453,10 @@ Token next_tok(Lexer *lex)
          }
 
          tbuf_put(lex, ch);
-         advance(lex);
+         lex_adv(lex);
       }
 
-      tok.val = lex->tbuf;
+      tok.lexeme = lex->tbuf;
       tok.len = lex->tlen;
       return tok;
    }
@@ -464,28 +464,28 @@ Token next_tok(Lexer *lex)
    // arrows
    if (cur == '-')
    {
-      int next = peek(lex);
+      int next = lex_peek(lex);
       if (next == '>')
       {
          tok.type = TOK_ARROW;
          tbuf_put2(lex, '-', '>');
-         advance(lex);
-         advance(lex);
-         tok.val = lex->tbuf;
+         lex_adv(lex);
+         lex_adv(lex);
+         tok.lexeme = lex->tbuf;
          tok.len = 2;
          return tok;
       }
    }
    if (cur == '=')
    {
-      int next = peek(lex);
+      int next = lex_peek(lex);
       if (next == '>')
       {
          tok.type = TOK_DBL_ARROW;
          tbuf_put2(lex, '=', '>');
-         advance(lex);
-         advance(lex);
-         tok.val = lex->tbuf;
+         lex_adv(lex);
+         lex_adv(lex);
+         tok.lexeme = lex->tbuf;
          tok.len = 2;
          return tok;
       }
@@ -495,7 +495,7 @@ Token next_tok(Lexer *lex)
    if (cur == '=' || cur == '!' || cur == '<' || cur == '>')
    {
       // == or != or <= or >=
-      if (peek(lex) == '=')
+      if (lex_peek(lex) == '=')
       {
          switch (cur)
          {
@@ -517,9 +517,9 @@ Token next_tok(Lexer *lex)
          }
 
          tbuf_put2(lex, cur, '=');
-         advance(lex);
-         advance(lex);
-         tok.val = lex->tbuf;
+         lex_adv(lex);
+         lex_adv(lex);
+         tok.lexeme = lex->tbuf;
          tok.len = 2;
          return tok;
       }
@@ -544,8 +544,8 @@ Token next_tok(Lexer *lex)
       }
 
       tbuf_put(lex, cur);
-      advance(lex);
-      tok.val = lex->tbuf;
+      lex_adv(lex);
+      tok.lexeme = lex->tbuf;
       tok.len = 1;
       return tok;
    }
@@ -554,7 +554,7 @@ Token next_tok(Lexer *lex)
    if (cur == '+' || cur == '-' || cur == '*' || cur == '/' || cur == '%')
    {
       // in-place binary op
-      if (peek(lex) == '=')
+      if (lex_peek(lex) == '=')
       {
          switch (cur)
          {
@@ -579,9 +579,9 @@ Token next_tok(Lexer *lex)
          }
 
          tbuf_put2(lex, cur, '=');
-         advance(lex);
-         advance(lex);
-         tok.val = lex->tbuf;
+         lex_adv(lex);
+         lex_adv(lex);
+         tok.lexeme = lex->tbuf;
          tok.len = 2;
          return tok;
       }
@@ -610,8 +610,8 @@ Token next_tok(Lexer *lex)
       }
 
       tbuf_put(lex, cur);
-      advance(lex);
-      tok.val = lex->tbuf;
+      lex_adv(lex);
+      tok.lexeme = lex->tbuf;
       tok.len = 1;
       return tok;
    }
@@ -650,8 +650,8 @@ Token next_tok(Lexer *lex)
    }
 
    tbuf_put(lex, cur);
-   advance(lex);
-   tok.val = lex->tbuf;
+   lex_adv(lex);
+   tok.lexeme = lex->tbuf;
    tok.len = 1;
    return tok;
 }

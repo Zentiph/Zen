@@ -36,28 +36,28 @@ char *__generate_err_msg(const char *msg, const char *filename, int line)
 
 // ----- public api -----
 
-Parser *init_parser(Lexer *lex)
+parser_t *parser_init(lexer_t *lex)
 {
-   Parser *parser = (Parser *)malloc(sizeof(Parser));
+   parser_t *parser = (parser_t *)malloc(sizeof(parser_t));
    parser->lex = lex;
-   parser->cur = next_tok(&parser->lex);
+   parser->cur = lex_next(&parser->lex);
 
-   Token tok;
+   token_t tok;
    tok.type = TOK_INVALID;
-   tok.val = "";
+   tok.lexeme = NULL;
    tok.len = 0;
    parser->prev = tok;
 
    return parser;
 }
 
-void advance(Parser *parser)
+void parser_adv(parser_t *parser)
 {
    parser->prev = parser->cur;
-   parser->cur = next_tok(&parser->lex);
+   parser->cur = lex_next(&parser->lex);
 }
 
-bool match(Parser *parser, TokenType tok_type)
+bool parser_match(parser_t *parser, Token tok_type)
 {
    if (parser->cur.type == tok_type)
    {
@@ -67,12 +67,12 @@ bool match(Parser *parser, TokenType tok_type)
    return false;
 }
 
-bool check(Parser *parser, TokenType tok_type)
+bool parser_check(parser_t *parser, Token tok_type)
 {
    return parser->cur.type == tok_type;
 }
 
-void expect(Parser *parser, TokenType tok_type, const char *msg)
+void parser_expect(parser_t *parser, Token tok_type, const char *msg)
 {
    if (parser->cur.type != tok_type)
    {
@@ -83,12 +83,12 @@ void expect(Parser *parser, TokenType tok_type, const char *msg)
    advance(parser);
 }
 
-Token peek_tok(Lexer *lex)
+token_t peek_tok(lexer_t *lex)
 {
    // TODO
 }
 
-void error(Parser *parser, const char *msg)
+void error(parser_t *parser, const char *msg)
 {
    fprintf(stderr, __generate_err_msg(msg, parser->lex->filename, parser->lex->line));
 }

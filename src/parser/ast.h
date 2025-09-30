@@ -18,12 +18,12 @@
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ///
 
-#ifndef AST_H
-#define AST_H
+#ifndef ZLANG_AST_H
+#define ZLANG_AST_H
 
 #include "lexer/lexer.h"
 
-/// @brief An enum of every type of ASTNode.
+/// @brief An enum of every type of AST node.
 typedef enum
 {
    AST_NUM,
@@ -41,7 +41,7 @@ typedef enum
 } ASTNodeType;
 
 /// @brief An AST node that stores an ASTNodeType and the data related to that type.
-typedef struct ASTNode
+typedef struct _ASTNode
 {
    ASTNodeType type;
 
@@ -57,123 +57,124 @@ typedef struct ASTNode
       } id;
       struct
       {
-         struct ASTNode *lhs;
-         TokenType op;
-         struct ASTNode *rhs;
+         struct _ASTNode *lhs;
+         Token op;
+         struct _ASTNode *rhs;
       } binary;
       struct
       {
-         TokenType op;
-         struct ASTNode *operand;
+         Token op;
+         struct _ASTNode *operand;
       } unary;
       struct
       {
-         struct ASTNode *cond;
-         struct ASTNode *then_block;
-         struct ASTNode *else_block; // optional
+         struct _ASTNode *cond;
+         struct _ASTNode *then_block;
+         struct _ASTNode *else_block; // optional
       } if_stmt;
       struct
       {
-         struct ASTNode *cond;
-         struct ASTNode *body;
+         struct _ASTNode *cond;
+         struct _ASTNode *body;
       } while_stmt;
       struct
       {
          char *name;
          char **params;
          int num_params;
-         struct ASTNode *body;
+         struct _ASTNode *body;
       } func_def;
       struct
       {
-         struct ASTNode *val; // can be NULL
+         struct _ASTNode *val; // can be NULL
       } return_stmt;
       struct
       {
          char *name;
-         struct ASTNode **args;
+         struct _ASTNode **args;
          int num_args;
       } func_call;
       struct
       {
-         struct ASTNode **stmts;
+         struct _ASTNode **stmts;
          int num_stmts;
       } block;
       struct
       {
          char *name;
-         struct ASTNode *val;
+         struct _ASTNode *val;
       } assign;
    };
-} ASTNode;
+} ast_node_t;
 
-/// @brief Create a number ASTNode.
+/// @brief Create a number AST node.
 /// @param val The numeric value.
-/// @return The ASTNode.
-ASTNode *create_num_node(float val);
+/// @return The AST node.
+ast_node_t *ast_init_num(float val);
 
-/// @brief Create an identifier ASTNode.
+/// @brief Create an identifier AST node.
 /// @param val The name.
-/// @return The ASTNode.
-ASTNode *create_id_node(char *name);
+/// @return The AST node.
+ast_node_t *ast_init_id(char *name);
 
-/// @brief Create a binary ASTNode.
+/// @brief Create a binary AST node.
 /// @param lhs The lefthand side.
 /// @param op  The operator to use.
 /// @param rhs The righthand side.
-/// @return The ASTNode.
-ASTNode *create_binary_node(ASTNode *lhs, TokenType op, ASTNode *rhs);
+/// @return The AST node.
+ast_node_t *ast_init_binary(ast_node_t *lhs, Token op, ast_node_t *rhs);
 
-/// @brief Create a unary ASTNode.
+/// @brief Create a unary AST node.
 /// @param op      The operator to use.
 /// @param operand The node to perform the operation on.
-/// @return The ASTNode.
-ASTNode *create_unary_node(TokenType op, ASTNode *operand);
+/// @return The AST node.
+ast_node_t *ast_init_unary(Token op, ast_node_t *operand);
 
-/// @brief Create an if statement ASTNode.
+/// @brief Create an if statement AST node.
 /// @param cond       The condition for the statement to run.
 /// @param then_block The then block.
 /// @param else_block The else block (optional).
-/// @return The ASTNode.
-ASTNode *create_if_node(ASTNode *cond, ASTNode *then_block, ASTNode *else_block);
+/// @return The AST node.
+ast_node_t *ast_init_if(ast_node_t *cond, ast_node_t *then_block,
+                        ast_node_t *else_block);
 
-/// @brief Create a while statement ASTNode.
+/// @brief Create a while statement AST node.
 /// @param cond The condition for the while statement to run.
 /// @param body The body of the while statement.
-/// @return The ASTNode.
-ASTNode *create_while_node(ASTNode *cond, ASTNode *body);
+/// @return The AST node.
+ast_node_t *ast_init_while(ast_node_t *cond, ast_node_t *body);
 
-/// @brief Create a function definition ASTNode.
+/// @brief Create a function definition AST node.
 /// @param name       The name of the function.
 /// @param params     The names of the function parameters.
 /// @param num_params The number of function parameters.
 /// @param body       The body of the function.
-/// @return The ASTNode.
-ASTNode *create_func_def_node(char *name, char **params,
-                              int num_params, ASTNode *body);
+/// @return The AST node.
+ast_node_t *ast_init_func_def(char *name, char **params,
+                              int num_params, ast_node_t *body);
 
-/// @brief Create a return ASTNode.
+/// @brief Create a return AST node.
 /// @param val The value to return.
-/// @return The ASTNode.
-ASTNode *create_return_node(ASTNode *val);
+/// @return The AST node.
+ast_node_t *ast_init_return(ast_node_t *val);
 
-/// @brief Create a function call ASTNode.
+/// @brief Create a function call AST node.
 /// @param name     The name of the function.
 /// @param args     The values of the arguments passed to the function.
 /// @param num_args The number of arguments passed to the function.
-/// @return The ASTNode.
-ASTNode *create_func_call_node(char *name, ASTNode **args, int num_args);
+/// @return The AST node.
+ast_node_t *ast_init_func_call(char *name, ast_node_t **args, int num_args);
 
-/// @brief Create a code block ASTNode.
+/// @brief Create a code block AST node.
 /// @param stmts     The statements in the block.
 /// @param num_stmts The number of statements.
-/// @return The ASTNode.
-ASTNode *create_block_node(ASTNode **stmts, int num_stmts);
+/// @return The AST node.
+ast_node_t *ast_init_block(ast_node_t **stmts, int num_stmts);
 
-/// @brief Create an assignment ASTNode.
+/// @brief Create an assignment AST node.
 /// @param name The name of the variable to assign to.
 /// @param val  The value to assign to the variable.
-/// @return The ASTNode.
-ASTNode *create_assign_node(char *name, ASTNode *val);
+/// @return The AST node.
+ast_node_t *ast_init_assign(char *name, ast_node_t *val);
 
-#endif // AST_H
+#endif // ZLANG_AST_H

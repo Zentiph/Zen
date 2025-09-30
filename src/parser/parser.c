@@ -23,14 +23,14 @@
 #include "parser.h"
 
 // ----- internals -----
-char *__generate_err_msg(const char *msg, const char *filename, int line)
+char *generate_err_msg(const char *msg, const char *filename, int line)
 {
-   size_t buf_size = 512;
-   char *err_msg = (char *)malloc(buf_size);
+   size_t bufsiz = 512;
+   char *err_msg = (char *)malloc(bufsiz);
    if (!err_msg)
       return NULL;
 
-   snprintf(err_msg, buf_size, "Syntax error at %s:%d - %s", filename, line, msg);
+   snprintf(err_msg, bufsiz, "Syntax error at %s:%d - %s", filename, line, msg);
    return err_msg;
 }
 
@@ -39,22 +39,41 @@ char *__generate_err_msg(const char *msg, const char *filename, int line)
 parser_t *parser_init(lexer_t *lex)
 {
    parser_t *parser = (parser_t *)malloc(sizeof(parser_t));
-   parser->lex = lex;
-   parser->cur = lex_next(&parser->lex);
+   if (!parser)
+      return NULL;
 
-   token_t tok;
-   tok.type = TOK_INVALID;
-   tok.lexeme = NULL;
-   tok.len = 0;
-   parser->prev = tok;
+   parser->lex = lex;
+   parser->prev = (token_t){0};
+   parser->cur = lex_next(parser->lex);
+   parser->has_ahead = false;
 
    return parser;
 }
 
+token_t *parser_peek(parser_t *parser)
+{
+   if (!parser->has_ahead)
+   {
+      parser->ahead = lex_next(parser->lex);
+      parser->has_ahead = true;
+   }
+   return &parser->ahead;
+}
+
 void parser_adv(parser_t *parser)
 {
+   tok_free(&parser->prev);
    parser->prev = parser->cur;
-   parser->cur = lex_next(&parser->lex);
+
+   if (parser->has_ahead)
+   {
+      parser->cur = parser->ahead;
+      parser->has_ahead = false;
+   }
+   else
+   {
+      parser->cur = lex_next(&parser->lex);
+   }
 }
 
 bool parser_match(parser_t *parser, Token tok_type)
@@ -76,19 +95,28 @@ void parser_expect(parser_t *parser, Token tok_type, const char *msg)
 {
    if (parser->cur.type != tok_type)
    {
-      fprintf(stderr, "Syntax error: %s (found %s)\n",
-              msg, TOK_TO_STR[parser->cur.type]);
+      size_t msgsiz = 256;
+      char *msg = (char *)malloc(msgsiz);
+      if (!msg)
+      {
+         fprintf(stderr, generate_err_msg("Got unexpected token",
+                                          parser->lex->filename, parser->lex->line));
+      }
+      else
+      {
+         snprintf(msg, msgsiz,
+                  "Expected token %s but got %s",
+                  TOK_TO_STR[tok_type], TOK_TO_STR[parser->cur.type]);
+         fprintf(stderr, "%s\n", generate_err_msg(msg, parser->lex->filename, parser->lex->line));
+      }
       exit(EXIT_FAILURE);
    }
    advance(parser);
 }
 
-token_t peek_tok(lexer_t *lex)
+void parser_error(parser_t *parser, const char *msg)
 {
-   // TODO
-}
-
-void error(parser_t *parser, const char *msg)
-{
-   fprintf(stderr, __generate_err_msg(msg, parser->lex->filename, parser->lex->line));
+   char *msg = generate_err_msg(msg, parser->lex->filename, parser->lex->line);
+   fprintf(stderr, "%s\n", msg);
+   free(msg);
 }

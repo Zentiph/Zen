@@ -599,6 +599,21 @@ token_t lex_next(lexer_t *lex)
       return make_tok(type, lex->tbuf, lex->tlen);
    }
 
+   // two-char logic ops
+   if (cur == '&' || cur == '|')
+   {
+      char peeked = lex_peek(lex);
+      if (peeked == cur)
+      {
+         tbuf_put2(lex, cur, peeked);
+         lex_adv(lex);
+         lex_adv(lex);
+
+         return make_tok(TOK_AND, lex->tbuf, lex->tlen);
+      }
+      // continue if not && or ||, will be lexed below
+   }
+
    // single chars
    tbuf_put(lex, cur);
    lex_adv(lex);
@@ -606,6 +621,9 @@ token_t lex_next(lexer_t *lex)
    Token type;
    switch (cur)
    {
+   case '!':
+      type = TOK_NOT;
+      break;
    case ',':
       type = TOK_COMMA;
       break;

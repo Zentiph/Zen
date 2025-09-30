@@ -43,7 +43,7 @@
 #endif
 
 /// @brief A representation of the lexer's state.
-typedef struct
+typedef struct lexer_s
 {
    FILE *fp;
    const char *filename;
@@ -125,7 +125,7 @@ const char *TOK_TO_STR[] = {
     ZLANG__FOREACH_TOKEN(ZLANG__GENERATE_STR)};
 
 /// @brief A token, containing its type and its string value.
-typedef struct
+typedef struct token_s
 {
    Token type;
    char *lexeme;

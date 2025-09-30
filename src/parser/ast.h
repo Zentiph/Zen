@@ -38,12 +38,12 @@ typedef enum
    AST_BLOCK,
    AST_VAR_DECL,
    AST_ASSIGN,
-} ASTNodeType;
+} ASTNode;
 
-/// @brief An AST node that stores an ASTNodeType and the data related to that type.
-typedef struct _ASTNode
+/// @brief An AST node that stores an ASTNode and the data related to that type.
+typedef struct ast_node_s
 {
-   ASTNodeType type;
+   ASTNode type;
 
    union
    {
@@ -57,52 +57,52 @@ typedef struct _ASTNode
       } id;
       struct
       {
-         struct _ASTNode *lhs;
+         struct ast_node_s *lhs;
          Token op;
-         struct _ASTNode *rhs;
+         struct ast_node_s *rhs;
       } binary;
       struct
       {
          Token op;
-         struct _ASTNode *operand;
+         struct ast_node_s *operand;
       } unary;
       struct
       {
-         struct _ASTNode *cond;
-         struct _ASTNode *then_block;
-         struct _ASTNode *else_block; // optional
+         struct ast_node_s *cond;
+         struct ast_node_s *then_block;
+         struct ast_node_s *else_block; // optional
       } if_stmt;
       struct
       {
-         struct _ASTNode *cond;
-         struct _ASTNode *body;
+         struct ast_node_s *cond;
+         struct ast_node_s *body;
       } while_stmt;
       struct
       {
          char *name;
          char **params;
          int num_params;
-         struct _ASTNode *body;
+         struct ast_node_s *body;
       } func_def;
       struct
       {
-         struct _ASTNode *val; // can be NULL
+         struct ast_node_s *val; // can be NULL
       } return_stmt;
       struct
       {
          char *name;
-         struct _ASTNode **args;
+         struct ast_node_s **args;
          int num_args;
       } func_call;
       struct
       {
-         struct _ASTNode **stmts;
+         struct ast_node_s **stmts;
          int num_stmts;
       } block;
       struct
       {
          char *name;
-         struct _ASTNode *val;
+         struct ast_node_s *val;
       } assign;
    };
 } ast_node_t;

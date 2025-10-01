@@ -1,0 +1,157 @@
+- id: 1
+  title: Avoid Per-Token Heap Allocs for Punctuators/Keywords
+  desc: "make_tok mallocs lexeme for every token. Operators and delimiters don't
+    need a dynamic copy. Idea: store a small inline char lexeme[16] for short tokens
+    or a (const char*, size) view into the lexing buffer for identifiers/strings,
+    and set lexeme=NULL for fixed tokens. For stable storage, intern identifiers/keywords
+    into a string table/arena instead of malloc on every token."
+  urgency: medium
+  status: open
+  created: "2025-10-01"
+- id: 2
+  title: Intern Identifiers and Strings
+  desc: "Repeated names (foo, bar) get reallocated each time.
+
+    Idea: use a string interner (hash-consing) so pointer equality implies string
+    equality, speeding up symbol table lookups and trimming memory."
+  urgency: medium
+  status: open
+  created: "2025-10-01"
+- id: 3
+  title: Faster Keyword Checks
+  desc:
+    "Current linear scan over kw_tab. Idea: switch by first char length, then
+    memcmp, or use a small perfect hash/minimal DFA. For ~10-30 keywords this is cheap
+    and wins in hot loops."
+  urgency: low
+  status: open
+  created: "2025-10-01"
+- id: 4
+  title: Lexer Buffering Strategy
+  desc:
+    'The sliding window keeps ZLANG_LEX_KEEP_BK look-behind and supports peek
+    of 1.
+
+    Idea: consider mapping the whole file (mmap) or reading big chunks and using raw
+    pointers with a sentinel (append ''\0'') to reduce refill logic branches. If the
+    buffer approach is kept, try to keep ensure_ahead branchless in the hot path (only
+    refill when ptr + need >= end).'
+  urgency: medium
+  status: open
+  created: "2025-10-01"
+- id: 5
+  title: AST Allocation Strategy
+  desc: "Every node is an individual malloc.
+
+    Idea: add a bump allocator/arena per parse (or a region allocator per function/file).
+    Dramatically reduces allocator overhead and fragmentation. Pair with a single
+    arena_free at the end."
+  urgency: medium
+  status: open
+  created: "2025-10-01"
+- id: 6
+  title: Error Message Builder
+  desc:
+    "Repeated malloc(512) for messages. Idea: reuse a fixed thread-local buffer
+    or an arena; or only allocate when the formatted length won't fit a small stack
+    buffer (two-stage snprintf)."
+  urgency: high
+  status: open
+  created: "2025-10-01"
+- id: 7
+  title: Token enum naming clarity
+  desc:
+    "TOK_LT means 'less-than', TOK_LT_PAREN means 'left paren'. The LT abbreviation
+    does double-duty.
+
+    Idea: rename the left/right paren/brack/brace tokens to TOK_LPAREN/RPAREN, TOK_LBRACK/RBRACK,
+    TOK_LBRACE/RBRACE to avoid mental collisions with </>."
+  urgency: low
+  status: open
+  created: "2025-10-01"
+- id: 8
+  title: Public API contracts in headers
+  desc:
+    "Document ownership: who owns token_t.lexeme? who frees it? is parser_peek
+    stable across parser_adv? Idea: add brief ownership notes in lexer.h/parser.h
+    so future contributors don't guess."
+  urgency: low
+  status: open
+  created: "2025-10-01"
+- id: 9
+  title: Consistent int widths for positions
+  desc: "line/col are int.
+
+    Idea: use uint32_t (or size_t for column) and clamp on overflow; define a sentinel
+    policy for very long lines."
+  urgency: low
+  status: open
+  created: "2025-10-01"
+- id: 10
+  title: Robust string literal features
+  desc: 'Supported are \\n, \\t, quotes, and default passthrough.
+    Ideas:
+
+    Add hex (\\xNN) and Unicode (\\uXXXX, \\UXXXXXXXX) escape parsing (with strict
+    bounds).
+
+    Decide on multi-line strings (triple quotes?) vs explicit \\n.
+
+    Enforce error on unterminated strings (emit TOK_INVALID plus an error), not silent
+    break.'
+  urgency: low
+  status: open
+  created: "2025-10-01"
+- id: 11
+  title: Number literal spec
+  desc:
+    "Clarify allowed grammars: leading dot, trailing dot, exponent (1e-9), underscores
+    (1_000).
+
+    Idea: write a tiny EBNF in a comment and align the lexer logic to it. Exponents
+    are virtually free to add and help later stages."
+  urgency: low
+  status: open
+  created: "2025-10-01"
+- id: 12
+  title: Error handling policy
+  desc: "Some paths exit(EXIT_FAILURE) directly from the parser.
+
+    Idea: centralize error reporting in the parser with a callback or an error sink
+    (collect diagnostics), allowing continued parse (panic-mode recovery) to report
+    multiple errors in one pass."
+  urgency: low
+  status: open
+  created: "2025-10-01"
+- id: 13
+  title: Defensive limits
+  desc: "tbuf_put silently truncates; very long strings become silently chopped.
+
+    Idea: when tlen would exceed ZLANG_TOK_SIZ-1, set a lexer error flag and emit
+    TOK_INVALID (or a special TOK_ERR), with a diagnostic ('string literal too long')."
+  urgency: low
+  status: open
+  created: "2025-10-01"
+- id: 14
+  title: Keep results stable across units
+  desc:
+    "Decide whether TOK_TO_STR is a public API (header extern) or an internal
+    table (local to a .c).
+
+    Idea: if public, prefix with zlang_ and document stability guarantees; otherwise
+    keep it static in a .c and add a function const char* zlang_tok_name(Token)."
+  urgency: low
+  status: open
+  created: "2025-10-01"
+- id: 15
+  title: Testing nits
+  desc:
+    'Add token golden tests that feed tricky inputs: // at EOF, /. ... ./ nesting
+    (if unsupported, verify correct termination), 123..45, 123., .5, .., string with
+    \\n, unterminated string at EOF, extremely long identifier, mixed newlines \r\n.
+
+    Idea: build a CLI to snapshot different stages of compilation such as lex outputs
+    into files for diff-based regression.'
+  urgency: low
+  status: open
+  created: "2025-10-01"

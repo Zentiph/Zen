@@ -22,7 +22,7 @@
 
 #include "ast.h"
 
-ast_node_t *ast_init_num(float val)
+ast_node_t *ast_init_num(double val)
 {
    ast_node_t *node = (ast_node_t *)malloc(sizeof(ast_node_t));
    node->type = AST_NUM;

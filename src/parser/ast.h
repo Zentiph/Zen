@@ -110,7 +110,7 @@ typedef struct ast_node_s
 /// @brief Create a number AST node.
 /// @param val The numeric value.
 /// @return The AST node.
-ast_node_t *ast_init_num(float val);
+ast_node_t *ast_init_num(double val);
 
 /// @brief Create an identifier AST node.
 /// @param val The name.

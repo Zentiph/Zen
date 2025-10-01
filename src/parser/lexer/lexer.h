@@ -55,9 +55,6 @@ static const char *const KW_TAB[] = {
     "from",
     "export",
     "module",
-    "and",
-    "or",
-    "not",
     NULL}; // end of table marker
 
 /// @brief A representation of the lexer's state.

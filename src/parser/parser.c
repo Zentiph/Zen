@@ -51,6 +51,17 @@ parser_t *parser_init(lexer_t *lex)
    return parser;
 }
 
+void parser_close(parser_t *parser)
+{
+   lex_close(parser->lex);
+   free(parser->prev.lexeme);
+   free(parser->cur.lexeme);
+   if (parser->has_ahead)
+   {
+      free(parser->ahead.lexeme);
+   }
+}
+
 token_t *parser_peek(parser_t *parser)
 {
    if (!parser->has_ahead)

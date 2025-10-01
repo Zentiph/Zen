@@ -162,6 +162,11 @@ static inline void tok_free(token_t *tok)
 /// @return The initialized lexer.
 lexer_t *lex_init(FILE *fp, const char *filename);
 
+/// @brief Close and deallocate a lexer.
+///        This function automatically closes the file.
+/// @param lex  The lexer.
+void lex_close(lexer_t *lex);
+
 /// @brief Get the char the lexer is currently examining.
 /// @param lex The lexer.
 /// @return The current char.

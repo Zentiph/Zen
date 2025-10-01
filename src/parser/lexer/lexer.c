@@ -166,6 +166,22 @@ lexer_t *lex_init(FILE *fp, const char *filename)
    return lex;
 }
 
+void lex_close(lexer_t *lex)
+{
+   fclose(lex->fp);
+   free(lex->filename);
+   free(lex->ptr);
+   lex->bytes_read = 0;
+   lex->line = 0;
+   lex->col = 0;
+   lex->tlen = 0;
+   free(lex->tbuf);
+   free(lex->buf);
+   free(lex->_hist_line);
+   free(lex->_hist_col);
+   lex->_hist_len = 0;
+}
+
 int lex_cur(lexer_t *lex)
 {
    if (lex->bytes_read == 0)

@@ -38,36 +38,40 @@ typedef struct parser_s
 /// @return The initialized parser.
 parser_t *parser_init(lexer_t *lex);
 
+/// @brief Close and deallocate a parser.
+/// @param parser  The parser.
+void parser_close(parser_t *parser);
+
 /// @brief Peek at the next token.
-/// @param parser The parser.
+/// @param parser  The parser.
 /// @return The next token.
 token_t *parser_peek(parser_t *parser);
 
 /// @brief Advance to the next token.
-/// @param parser The parser.
+/// @param parser  The parser.
 void parser_adv(parser_t *parser);
 
 /// @brief Check if the current token matches the given token type.
 ///        If so, advance and return true. Otherwise, return false.
-/// @param parser   The parser.
-/// @param tok_type The token type to match.
+/// @param parser    The parser.
+/// @param tok_type  The token type to match.
 /// @return Whether the current token's type and expected type match.
 bool parser_match(parser_t *parser, Token tok_type);
 
 /// @brief Determine if the current token matches given token type without advancing.
-/// @param parser   The parser.
-/// @param tok_type The token type to check.
+/// @param parser    The parser.
+/// @param tok_type  The token type to check.
 /// @return Whether the current token's type and expected type match.
 bool parser_check(parser_t *parser, Token tok_type);
 
 /// @brief Similar to match(), but with an error message.
-/// @param parser   The parser.
-/// @param tok_type The token type to check.
+/// @param parser    The parser.
+/// @param tok_type  The token type to check.
 void parser_expect(parser_t *parser, Token tok_type);
 
 /// @brief Report a syntax error to the parser.
-/// @param parser The parser.
-/// @param msg    The error message.
+/// @param parser  The parser.
+/// @param msg     The error message.
 void parser_error(parser_t *parser, const char *msg);
 
 /// @brief Parse a primary expression.

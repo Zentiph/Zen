@@ -24,7 +24,7 @@
 #include "parser.h"
 
 // ----- internals -----
-char *generate_err_msg(const char *msg, const char *filename, int line)
+static char *generate_err_msg(const char *msg, const char *filename, int line)
 {
    size_t bufsiz = 512;
    char *err_msg = (char *)malloc(bufsiz);

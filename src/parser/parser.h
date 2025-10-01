@@ -63,8 +63,7 @@ bool parser_check(parser_t *parser, Token tok_type);
 /// @brief Similar to match(), but with an error message.
 /// @param parser   The parser.
 /// @param tok_type The token type to check.
-/// @param msg      The error message.
-void parser_expect(parser_t *parser, Token tok_type, const char *msg);
+void parser_expect(parser_t *parser, Token tok_type);
 
 /// @brief Report a syntax error to the parser.
 /// @param parser The parser.

@@ -42,6 +42,24 @@
 #define ZLANG_LEX_LOOKAHEAD 1
 #endif
 
+static const char *const KW_TAB[] = {
+    "if",
+    "else",
+    "while",
+    "for",
+    "in",
+    "fn",
+    "class",
+    "extends",
+    "import",
+    "from",
+    "export",
+    "module",
+    "and",
+    "or",
+    "not",
+    NULL}; // end of table marker
+
 /// @brief A representation of the lexer's state.
 typedef struct lexer_s
 {
@@ -121,7 +139,7 @@ typedef enum
 
 /// @brief An array of string representations
 ///        of enum values stored at their numeric value.
-const char *TOK_TO_STR[] = {
+static const char *TOK_TO_STR[] = {
     ZLANG__FOREACH_TOKEN(ZLANG__GENERATE_STR)};
 
 /// @brief A token, containing its type and its string value.

@@ -18,6 +18,7 @@
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ///
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "parser.h"
@@ -72,7 +73,7 @@ void parser_adv(parser_t *parser)
    }
    else
    {
-      parser->cur = lex_next(&parser->lex);
+      parser->cur = lex_next(parser->lex);
    }
 }
 
@@ -80,7 +81,7 @@ bool parser_match(parser_t *parser, Token tok_type)
 {
    if (parser->cur.type == tok_type)
    {
-      advance(parser);
+      parser_adv(parser);
       return true;
    }
    return false;
@@ -91,7 +92,7 @@ bool parser_check(parser_t *parser, Token tok_type)
    return parser->cur.type == tok_type;
 }
 
-void parser_expect(parser_t *parser, Token tok_type, const char *msg)
+void parser_expect(parser_t *parser, Token tok_type)
 {
    if (parser->cur.type != tok_type)
    {
@@ -107,16 +108,21 @@ void parser_expect(parser_t *parser, Token tok_type, const char *msg)
          snprintf(msg, msgsiz,
                   "Expected token %s but got %s",
                   TOK_TO_STR[tok_type], TOK_TO_STR[parser->cur.type]);
-         fprintf(stderr, "%s\n", generate_err_msg(msg, parser->lex->filename, parser->lex->line));
+         fprintf(stderr, "%s\n",
+                 generate_err_msg(msg, parser->lex->filename, parser->lex->line));
       }
+      free(msg);
       exit(EXIT_FAILURE);
    }
-   advance(parser);
+   parser_adv(parser);
 }
 
 void parser_error(parser_t *parser, const char *msg)
 {
-   char *msg = generate_err_msg(msg, parser->lex->filename, parser->lex->line);
-   fprintf(stderr, "%s\n", msg);
-   free(msg);
+   char *m = generate_err_msg(msg, parser->lex->filename, parser->lex->line);
+   if (!m)
+      fprintf(stderr, "Parser error at %s:%d",
+              parser->lex->filename, parser->lex->line);
+   fprintf(stderr, "%s\n", m);
+   free(m);
 }

@@ -146,24 +146,6 @@ static inline token_t make_tok(Token type, const char *buf, size_t len)
 }
 
 // ----- public api -----
-const char *kw_tab[] = {
-    "if",
-    "else",
-    "while",
-    "for",
-    "in",
-    "fn",
-    "class",
-    "extends",
-    "import",
-    "from",
-    "export",
-    "module",
-    "and",
-    "or",
-    "not",
-    NULL}; // end of table marker
-
 lexer_t *lex_init(FILE *fp, const char *filename)
 {
    lexer_t *lex = (lexer_t *)malloc(sizeof(lexer_t));
@@ -353,9 +335,9 @@ token_t lex_next(lexer_t *lex)
       }
 
       // check for keyword
-      for (int i = 0; kw_tab[i] != NULL; i++)
+      for (int i = 0; KW_TAB[i] != NULL; i++)
       {
-         if (strcmp(lex->tbuf, kw_tab[i]) == 0)
+         if (strcmp(lex->tbuf, KW_TAB[i]) == 0)
          {
             return make_tok(TOK_KW, lex->tbuf, lex->tlen);
          }
@@ -383,8 +365,7 @@ token_t lex_next(lexer_t *lex)
 
          if (ch == '\\')
          {
-            lex_adv(lex); // consume '\'
-            char esc = lex_adv(lex);
+            char esc = lex_adv(lex); // consume '\'
             switch (esc)
             {
             case 'n':
@@ -431,6 +412,7 @@ token_t lex_next(lexer_t *lex)
          return make_tok(TOK_DOT, lex->tbuf, lex->tlen);
       }
 
+      char prev;
       bool dot_seen = (cur == '.');
       while (isdigit((unsigned char)lex_cur(lex)) || lex_cur(lex) == '.')
       {
@@ -444,7 +426,14 @@ token_t lex_next(lexer_t *lex)
          }
 
          tbuf_put(lex, ch);
+         prev = lex_cur(lex);
          lex_adv(lex);
+      }
+
+      // if ended with a dot split into a number and a dot
+      if (prev == '.')
+      {
+         lex_unget(lex);
       }
 
       return make_tok(TOK_NUM, lex->tbuf, lex->tlen);
@@ -646,7 +635,6 @@ token_t lex_next(lexer_t *lex)
       type = TOK_RT_BRACE;
       break;
    case '\n':
-   case ';':
       type = TOK_NEWLINE;
       break;
    default:

@@ -6,6 +6,9 @@ but for now this is the easiest way for me.
 :authors: Gavin Borne
 """
 
+# TODO: Make this its own repo so it can be modularized,
+#       and then include it as a sub-repo here.
+
 import datetime
 import yaml
 import json

@@ -71,75 +71,11 @@ const lexer_t lexer_create(FILE *__restrict fp, char *__restrict filename);
 void lexer_destroy(const lexer_t lexer);
 
 ///
-/// @brief Get the character the lexer is currently examining.
-///
-/// @param lexer - The lexer.
-/// @return int  - The current character.
-///
-int lexer_current(lexer_t lexer);
-
-///
-/// @brief Peek at the next character.
-///
-/// @param lexer - The lexer.
-/// @return int  - The next character.
-///
-int lexer_peek(lexer_t lexer);
-
-///
-/// @brief Advance to the next character and return it.
-///
-/// @param lexer - The lexer.
-/// @return int  - The character that was advanced to.
-///
-int lexer_pre_advance(lexer_t lexer);
-
-///
-/// @brief Advance to the next character and return the previous character.
-///
-/// @param lexer - The lexer.
-/// @return int  - The character that was advanced past.
-///
-int lexer_post_advance(lexer_t lexer);
-
-/// @brief Un-consume a single char.
-///        This operation is guaranteed to be safe up to ZLANG_LEX_KEEP_BK times
-///        in a row without buffer refilling.
-/// @param lexer he lexer.
-/// @return Whether the operation was a success.
-
-///
-/// @brief Un-consume a single character. This operation is guaranteed to be
-///        safe up to ZLANG_LEX_KEEP_BK times in a row without buffer refilling.
-///
-/// @param lexer  - The lexer.
-/// @return true  - If the operation was a success.
-/// @return false - If the operation failed.
-///
-bool lexer_unget(lexer_t lexer);
-
-///
-/// @brief Skip n characters.
-///
-/// @param lexer - The lexer.
-/// @param n     - The number of characters to skip.
-///
-void lexer_skip(lexer_t lexer, int n);
-
-///
-/// @brief Skip meaningless whitespace until an important character is found.
-///        Newlines do not count as whitespace.
-///
-/// @param lexer - The lexer.
-///
-void lexer_skip_whitespace(lexer_t lexer);
-
-///
 /// @brief Get the next token in the file.
 ///
 /// @param lexer    - The lexer.
 /// @return token_t - The next token in the file.
 ///
-token_t lex_next(lexer_t lexer);
+token_t lexer_next(lexer_t lexer);
 
 #endif // ZLANG_LEXER_H

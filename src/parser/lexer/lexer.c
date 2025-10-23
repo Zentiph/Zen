@@ -1,6 +1,6 @@
 /// @file lexer.c
 /// @author Gavin Borne
-/// @brief Lexer types and functions for the Zen programming language.
+/// @brief Lexer specification for the Zen programming language.
 /// @copyright Copyright (C) 2025  Gavin Borne
 ///
 /// This program is free software: you can redistribute it and/or modify
@@ -158,36 +158,7 @@ static inline token_t _make_token(Token type, const char *buf, size_t len) {
    return token;
 }
 
-const lexer_t lexer_create(FILE *fp, char *filename) {
-   const lexer_t lexer = (lexer_t)malloc(sizeof(*lexer));
-   if (!lexer)
-      return NULL;
-
-   lexer->fp = fp;
-   lexer->filename = filename;
-   lexer->bufptr = lexer->buf;
-   lexer->bytes_read = 0;
-   lexer->line = 1;
-   lexer->col = 1;
-   lexer->tlen = 0;
-   if (ZLANG_TOKSIZ > 0)
-      lexer->tbuf[0] = '\0';
-   lexer->_hist_len = 0;
-
-   return lexer;
-}
-
-void lexer_destroy(const lexer_t lexer) {
-   fclose(lexer->fp);
-   free(lexer->filename);
-   free(lexer->bufptr);
-   free(lexer->tbuf);
-   free(lexer->buf);
-   free(lexer->_hist_line);
-   free(lexer->_hist_col);
-}
-
-int lexer_current(const lexer_t lexer) {
+static int lexer_current(const lexer_t lexer) {
    if (lexer->bytes_read == 0)
       if (_prime(lexer) == 0)
          return EOF;
@@ -196,7 +167,7 @@ int lexer_current(const lexer_t lexer) {
    return (unsigned char)*lexer->bufptr;
 }
 
-int lexer_peek(const lexer_t lexer) {
+static int lexer_peek(const lexer_t lexer) {
    if (lexer->bytes_read == 0)
       if (_prime(lexer) == 0)
          return EOF;
@@ -205,7 +176,7 @@ int lexer_peek(const lexer_t lexer) {
    return (unsigned char)*(lexer->bufptr + 1);
 }
 
-int lexer_pre_advance(const lexer_t lexer) {
+static int lexer_pre_advance(const lexer_t lexer) {
    if (lexer->bytes_read == 0)
       if (_prime(lexer) == 0)
          return EOF;
@@ -245,7 +216,7 @@ int lexer_pre_advance(const lexer_t lexer) {
    return (int)next;
 }
 
-int lexer_post_advance(const lexer_t lexer) {
+static int lexer_post_advance(const lexer_t lexer) {
    if (lexer->bytes_read == 0)
       if (_prime(lexer) == 0)
          return EOF;
@@ -287,7 +258,7 @@ int lexer_post_advance(const lexer_t lexer) {
    return (int)current;
 }
 
-bool lexer_unget(const lexer_t lexer) {
+static bool lexer_unget(const lexer_t lexer) {
    if (lexer->_hist_len <= 0)
       return false; // nothing to restore
    if (lexer->bufptr <= lexer->buf)
@@ -303,7 +274,7 @@ bool lexer_unget(const lexer_t lexer) {
    return true;
 }
 
-void lexer_skip(const lexer_t lexer, int n) {
+static void lexer_skip(const lexer_t lexer, int n) {
    if (n <= 0)
       return;
    while (n-- > 0)
@@ -311,7 +282,7 @@ void lexer_skip(const lexer_t lexer, int n) {
          return;
 }
 
-void lexer_skip_whitespace(const lexer_t lexer) {
+static void lexer_skip_whitespace(const lexer_t lexer) {
    for (;;) {
       int cur = lexer_current(lexer);
       if (cur == EOF)
@@ -320,219 +291,159 @@ void lexer_skip_whitespace(const lexer_t lexer) {
          return;
       if (cur == '\n')
          return; // preserve newline as a token
-      lexer_pre_advance(lexer);
+      lexer_skip(lexer, 1);
    }
 }
 
-token_t lex_next(const lexer_t lexer) {
-   _tbuf_reset(lexer);
+static const token_t lex_single_line_comment(lexer_t lexer) {
+   lexer_skip(lexer, 2); // skip "//"
 
-   lexer_skip_whitespace(lexer);
+   while (lexer_current(lexer) != '\n' && lexer_current(lexer) != EOF)
+      _tbuf_put(lexer, lexer_pre_advance(lexer));
 
-   int cc = lexer_current(lexer);
-   if (cc == EOF) {
-      return _make_token(TOK_EOF, lexer->tbuf, lexer->tlen);
+   return _make_token(TOK_COMMENT, lexer->tbuf, lexer->tlen);
+}
+
+static const token_t lex_multi_line_comment(lexer_t lexer) {
+   lexer_skip(lexer, 2); // skip opening "/."
+
+   for (;;) {
+      // end of comment
+      if (lexer_current(lexer) == '.' && lexer_peek(lexer) == '/') {
+         lexer_skip(lexer, 2); // skip "./"
+         break;
+      }
+      if (lexer_current(lexer) == EOF)
+         break;
+
+      _tbuf_put(lexer, lexer_pre_advance(lexer));
    }
 
-   char cur = (char)cc;
+   return _make_token(TOK_COMMENT, lexer->tbuf, lexer->tlen);
+}
 
-   // single-line comments
-   if (cur == '/' && lexer_peek(lexer) == '/') {
-      lexer_skip(lexer, 2); // lexer_skip "//"
+static const token_t lex_identifier(lexer_t lexer) {
+   for (;;) {
+      int c = lexer_current(lexer);
 
-      while (lexer_current(lexer) != '\n' && lexer_current(lexer) != EOF)
-         _tbuf_put(lexer, lexer_pre_advance(lexer));
+      if (!(isalnum((unsigned char)c) || c == '_'))
+         break;
 
-      return _make_token(TOK_COMMENT, lexer->tbuf, lexer->tlen);
+      _tbuf_put(lexer, lexer_current(lexer));
+      lexer_skip(lexer, 1);
    }
 
-   // multi-line comments
-   if (cur == '/' && lexer_peek(lexer) == '.') {
-      lexer_skip(lexer, 2); // lexer_skip opening "/."
+   for (int i = 0; KW_TAB[i] != NULL; i++) {
+      if (strcmp(lexer->tbuf, KW_TAB[i]) == 0) {
+         return _make_token(TOK_KW, lexer->tbuf, lexer->tlen);
+      }
+   }
 
-      while (true) {
-         // end of comment
-         if (lexer_current(lexer) == '.' && lexer_peek(lexer) == '/') {
-            lexer_skip(lexer, 2); // lexer_skip closing "./"
+   return _make_token(TOK_ID, lexer->tbuf, lexer->tlen);
+}
+
+static const token_t lex_string(lexer_t lexer, char entry_quote) {
+   lexer_skip(lexer, 1); // consume opening quote
+
+   for (;;) {
+      int ch = lexer_current(lexer);
+      if (ch == EOF || ch == '\n')
+         break;
+      if (ch == entry_quote) {
+         lexer_skip(lexer, 1); // consume closing quote
+         break;
+      }
+
+      if (ch == '\\') {
+         char esc = lexer_pre_advance(lexer); // consume '\'
+         switch (esc) {
+         // TODO make a table similar to KW_TAB that defines supported escape
+         // seqs
+         case 'n':
+            _tbuf_put(lexer, '\n');
             break;
-         }
-         if (lexer_current(lexer) == EOF)
+         case 't':
+            _tbuf_put(lexer, '\t');
             break;
-
-         _tbuf_put(lexer, lexer_pre_advance(lexer));
-      }
-
-      return _make_token(TOK_COMMENT, lexer->tbuf, lexer->tlen);
-   }
-
-   // keywords and identifiers
-   if (isalpha((unsigned char)cur) || cur == '_') {
-      for (;;) {
-         int c = lexer_current(lexer);
-         if (!(isalnum((unsigned char)c) || c == '_'))
+         case '\\':
+            _tbuf_put(lexer, '\\');
             break;
-         _tbuf_put(lexer, lexer_current(lexer));
-         lexer_pre_advance(lexer);
-      }
-
-      // check for keyword
-      for (int i = 0; KW_TAB[i] != NULL; i++) {
-         if (strcmp(lexer->tbuf, KW_TAB[i]) == 0) {
-            return _make_token(TOK_KW, lexer->tbuf, lexer->tlen);
-         }
-      }
-
-      return _make_token(TOK_ID, lexer->tbuf, lexer->tlen);
-   }
-
-   // string literals (quotes not included in token)
-   if (cur == '"' || cur == '\'') {
-      char quote = cur;         // store quote type for consistency
-      lexer_pre_advance(lexer); // consume opening quote
-
-      for (;;) {
-         int ch = lexer_current(lexer);
-         if (ch == EOF || ch == '\n')
-            break; // unterminated
-         if (ch == quote) {
-            lexer_pre_advance(lexer); // consume closing quote
+         case '"':
+            _tbuf_put(lexer, '"');
             break;
-         }
-
-         if (ch == '\\') {
-            char esc = lexer_pre_advance(lexer); // consume '\'
-            switch (esc) {
-            case 'n':
-               _tbuf_put(lexer, '\n');
-               break;
-            case 't':
-               _tbuf_put(lexer, '\t');
-               break;
-            case '\\':
-               _tbuf_put(lexer, '\\');
-               break;
-            case '"':
-               _tbuf_put(lexer, '"');
-               break;
-            case '\'':
-               _tbuf_put(lexer, '\'');
-               break;
-            default:
-               // handle invalid esc sequence by appending as-is
-               _tbuf_put(lexer, '\\');
-               _tbuf_put(lexer, esc);
-               break;
-            }
-            lexer_pre_advance(lexer); // move past escaped char
-         } else {
-            _tbuf_put(lexer, ch);
-            lexer_pre_advance(lexer);
-         }
-      }
-
-      return _make_token(TOK_STR, lexer->tbuf, lexer->tlen);
-   }
-
-   // number literals and dot
-   if (isdigit((unsigned char)cur) || cur == '.') {
-      // dot without surrounding digits, dot token
-      if (cur == '.' && !isdigit((unsigned char)lexer_peek(lexer))) {
-         _tbuf_put(lexer, '.');
-         lexer_pre_advance(lexer);
-         return _make_token(TOK_DOT, lexer->tbuf, lexer->tlen);
-      }
-
-      char prev;
-      bool dot_seen = (cur == '.');
-      while (isdigit((unsigned char)lexer_current(lexer)) ||
-             lexer_current(lexer) == '.') {
-         int ch = lexer_current(lexer);
-         if (ch == '.') {
-            if (!dot_seen)
-               dot_seen = true;
-            else
-               break; // end the number at 2 dots
-         }
-
-         _tbuf_put(lexer, ch);
-         prev = lexer_current(lexer);
-         lexer_pre_advance(lexer);
-      }
-
-      // if ended with a dot split into a number and a dot
-      if (prev == '.') {
-         lexer_unget(lexer);
-      }
-
-      return _make_token(TOK_NUM, lexer->tbuf, lexer->tlen);
-   }
-
-   // arrows
-   if (cur == '-') {
-      int next = lexer_peek(lexer);
-      if (next == '>') {
-         _tbuf_put2(lexer, '-', '>');
-         lexer_pre_advance(lexer);
-         lexer_pre_advance(lexer);
-         return _make_token(TOK_ARROW, lexer->tbuf, lexer->tlen);
-      }
-   }
-   if (cur == '=') {
-      int next = lexer_peek(lexer);
-      if (next == '>') {
-         _tbuf_put2(lexer, '=', '>');
-         lexer_pre_advance(lexer);
-         lexer_pre_advance(lexer);
-         return _make_token(TOK_DBL_ARROW, lexer->tbuf, lexer->tlen);
-      }
-   }
-
-   // comparison ops
-   if (cur == '=' || cur == '!' || cur == '<' || cur == '>') {
-      // == or != or <= or >=
-      if (lexer_peek(lexer) == '=') {
-         _tbuf_put2(lexer, cur, '=');
-         lexer_pre_advance(lexer);
-         lexer_pre_advance(lexer);
-
-         Token type;
-         switch (cur) {
-         case '=':
-            type = TOK_EQ;
-            break;
-         case '!':
-            type = TOK_NE;
-            break;
-         case '<':
-            type = TOK_LE;
-            break;
-         case '>':
-            type = TOK_GE;
+         case '\'':
+            _tbuf_put(lexer, '\'');
             break;
          default:
-            type = TOK_INVALID;
+            // handle invalid esc sequence by appending as-is
+            _tbuf_put(lexer, '\\');
+            _tbuf_put(lexer, esc);
             break;
          }
+         lexer_skip(lexer, 1); // move past escaped char
+      } else {
+         _tbuf_put(lexer, ch);
+         lexer_skip(lexer, 1);
+      }
+   }
 
-         return _make_token(type, lexer->tbuf, lexer->tlen);
+   return _make_token(TOK_STR, lexer->tbuf, lexer->tlen);
+}
+static const token_t lex_number_or_dot(lexer_t lexer, char current) {
+   if (current == '.' && !isdigit((unsigned char)lexer_peek(lexer))) {
+      _tbuf_put(lexer, '.');
+      lexer_skip(lexer, 1);
+      return _make_token(TOK_DOT, lexer->tbuf, lexer->tlen);
+   }
+
+   char prev;
+   bool dot_seen = (current == '.');
+   while (isdigit((unsigned char)lexer_current(lexer)) ||
+          lexer_current(lexer) == '.') {
+      int ch = lexer_current(lexer);
+      if (ch == '.') {
+         if (!dot_seen)
+            dot_seen = true;
+         else
+            break; // end the number if 2 dots found
       }
 
-      _tbuf_put(lexer, cur);
-      lexer_pre_advance(lexer);
+      _tbuf_put(lexer, ch);
+      prev = lexer_post_advance(lexer);
+   }
+
+   // if ended with a dot split into number and dot
+   if (prev == '.')
+      lexer_unget(lexer);
+
+   return _make_token(TOK_NUM, lexer->tbuf, lexer->tlen);
+}
+
+static const token_t lex_arrow(lexer_t lexer, char arrow_symbol) {
+   _tbuf_put2(lexer, arrow_symbol, '>');
+   lexer_skip(lexer, 2);
+   return _make_token(TOK_ARROW, lexer->tbuf, lexer->tlen);
+}
+
+static const token_t lex_comparison_op(lexer_t lexer, char current) {
+   // == or != or <= or >=
+   if (lexer_peek(lexer) == '=') {
+      _tbuf_put2(lexer, current, '=');
+      lexer_skip(lexer, 2);
 
       Token type;
-      switch (cur) {
+      switch (current) {
       case '=':
-         type = TOK_ASSIGN;
+         type = TOK_EQ;
          break;
       case '!':
-         type = TOK_NOT;
+         type = TOK_NE;
          break;
       case '<':
-         type = TOK_LT;
+         type = TOK_LE;
          break;
       case '>':
-         type = TOK_GT;
+         type = TOK_GE;
          break;
       default:
          type = TOK_INVALID;
@@ -542,87 +453,107 @@ token_t lex_next(const lexer_t lexer) {
       return _make_token(type, lexer->tbuf, lexer->tlen);
    }
 
-   // binary ops
-   if (cur == '+' || cur == '-' || cur == '*' || cur == '/' || cur == '%') {
-      // in-place binary op
-      if (lexer_peek(lexer) == '=') {
-         _tbuf_put2(lexer, cur, '=');
-         lexer_pre_advance(lexer);
-         lexer_pre_advance(lexer);
-
-         Token type;
-         switch (cur) {
-         case '+':
-            type = TOK_ADD_ASSIGN;
-            break;
-         case '-':
-            type = TOK_SUB_ASSIGN;
-            break;
-         case '*':
-            type = TOK_MUL_ASSIGN;
-            break;
-         case '/':
-            type = TOK_DIV_ASSIGN;
-            break;
-         case '%':
-            type = TOK_MOD_ASSIGN;
-            break;
-         default:
-            type = TOK_INVALID;
-            break;
-         }
-
-         return _make_token(type, lexer->tbuf, lexer->tlen);
-      }
-
-      // regular binary op
-      _tbuf_put(lexer, cur);
-      lexer_pre_advance(lexer);
-
-      Token type;
-      switch (cur) {
-      case '+':
-         type = TOK_ADD;
-         break;
-      case '-':
-         type = TOK_SUB;
-         break;
-      case '*':
-         type = TOK_MUL;
-         break;
-      case '/':
-         type = TOK_DIV;
-         break;
-      case '%':
-         type = TOK_MOD;
-         break;
-      default:
-         type = TOK_INVALID;
-         break;
-      }
-
-      return _make_token(type, lexer->tbuf, lexer->tlen);
-   }
-
-   // two-char logic ops
-   if (cur == '&' || cur == '|') {
-      char peeked = lexer_peek(lexer);
-      if (peeked == cur) {
-         _tbuf_put2(lexer, cur, peeked);
-         lexer_pre_advance(lexer);
-         lexer_pre_advance(lexer);
-
-         return _make_token(TOK_AND, lexer->tbuf, lexer->tlen);
-      }
-      // continue if not && or ||, will be lexed below
-   }
-
-   // single chars
-   _tbuf_put(lexer, cur);
-   lexer_pre_advance(lexer);
+   _tbuf_put(lexer, current);
+   lexer_skip(lexer, 1);
 
    Token type;
-   switch (cur) {
+   switch (current) {
+   case '=':
+      type = TOK_ASSIGN;
+      break;
+   case '!':
+      type = TOK_NOT;
+      break;
+   case '<':
+      type = TOK_LT;
+      break;
+   case '>':
+      type = TOK_GT;
+      break;
+   default:
+      type = TOK_INVALID;
+      break;
+   }
+
+   return _make_token(type, lexer->tbuf, lexer->tlen);
+}
+
+static const token_t lex_binary_op(lexer_t lexer, char current) {
+   // in-place binary op
+   if (lexer_peek(lexer) == '=') {
+      _tbuf_put2(lexer, current, '=');
+      lexer_skip(lexer, 2);
+
+      Token type;
+      switch (current) {
+      case '+':
+         type = TOK_ADD_ASSIGN;
+         break;
+      case '-':
+         type = TOK_SUB_ASSIGN;
+         break;
+      case '*':
+         type = TOK_MUL_ASSIGN;
+         break;
+      case '/':
+         type = TOK_DIV_ASSIGN;
+         break;
+      case '%':
+         type = TOK_MOD_ASSIGN;
+         break;
+      default:
+         type = TOK_INVALID;
+         break;
+      }
+
+      return _make_token(type, lexer->tbuf, lexer->tlen);
+   }
+
+   // regular binary op
+   _tbuf_put(lexer, current);
+   lexer_skip(lexer, 1);
+
+   Token type;
+   switch (current) {
+   case '+':
+      type = TOK_ADD;
+      break;
+   case '-':
+      type = TOK_SUB;
+      break;
+   case '*':
+      type = TOK_MUL;
+      break;
+   case '/':
+      type = TOK_DIV;
+      break;
+   case '%':
+      type = TOK_MOD;
+      break;
+   default:
+      type = TOK_INVALID;
+      break;
+   }
+
+   return _make_token(type, lexer->tbuf, lexer->tlen);
+}
+
+static const token_t lex_logic_op(lexer_t lexer, char symbol) {
+   _tbuf_put2(lexer, symbol, symbol);
+   lexer_skip(lexer, 2);
+
+   if (symbol == '&')
+      return _make_token(TOK_AND, lexer->tbuf, lexer->tlen);
+   else
+      return _make_token(TOK_OR, lexer->tbuf, lexer->tlen);
+}
+
+static const token_t lex_single_symbol(lexer_t lexer, char current) {
+   _tbuf_put(lexer, current);
+   lexer_skip(lexer, 1);
+
+   Token type;
+   switch (current) {
    case '!':
       type = TOK_NOT;
       break;
@@ -656,4 +587,80 @@ token_t lex_next(const lexer_t lexer) {
    }
 
    return _make_token(type, lexer->tbuf, lexer->tlen);
+}
+
+const lexer_t lexer_create(FILE *fp, char *filename) {
+   const lexer_t lexer = (lexer_t)malloc(sizeof(*lexer));
+   if (!lexer)
+      return NULL;
+
+   lexer->fp = fp;
+   lexer->filename = filename;
+   lexer->bufptr = lexer->buf;
+   lexer->bytes_read = 0;
+   lexer->line = 1;
+   lexer->col = 1;
+   lexer->tlen = 0;
+   if (ZLANG_TOKSIZ > 0)
+      lexer->tbuf[0] = '\0';
+   lexer->_hist_len = 0;
+
+   return lexer;
+}
+
+void lexer_destroy(const lexer_t lexer) {
+   fclose(lexer->fp);
+   free(lexer->filename);
+   free(lexer->bufptr);
+   free(lexer->tbuf);
+   free(lexer->buf);
+   free(lexer->_hist_line);
+   free(lexer->_hist_col);
+   free(lexer);
+}
+
+token_t lexer_next(const lexer_t lexer) {
+   _tbuf_reset(lexer);
+
+   lexer_skip_whitespace(lexer);
+
+   int cc = lexer_current(lexer);
+   if (cc == EOF) {
+      return _make_token(TOK_EOF, lexer->tbuf, lexer->tlen);
+   }
+
+   char cur = (char)cc;
+
+   if (cur == '/' && lexer_peek(lexer) == '/')
+      return lex_single_line_comment(lexer);
+
+   if (cur == '/' && lexer_peek(lexer) == '.')
+      return lex_multi_line_comment(lexer);
+
+   if (isalpha((unsigned char)cur) || cur == '_')
+      return lex_identifier(lexer);
+
+   // quotes not included in token
+   if (cur == '"' || cur == '\'')
+      return lex_string(lexer, cur);
+
+   if (isdigit((unsigned char)cur) || cur == '.')
+      return lex_number_or_dot(lexer, cur);
+
+   if ((cur == '-' || cur == '=') && lexer_peek(lexer) == '>')
+      return lex_arrow(lexer, cur);
+
+   if (cur == '=' || cur == '!' || cur == '<' || cur == '>')
+      return lex_comparison_op(lexer, cur);
+
+   if (cur == '+' || cur == '-' || cur == '*' || cur == '/' || cur == '%')
+      return lex_binary_op(lexer, cur);
+
+   if (cur == '&' || cur == '|') {
+      if (lexer_peek(lexer) == cur)
+         return lex_logic_op(lexer, cur);
+      // continue if not && or ||, will be lexed below
+   }
+
+   return lex_single_symbol(lexer, cur);
 }

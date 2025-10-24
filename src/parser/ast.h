@@ -19,8 +19,7 @@
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ///
 
-#ifndef ZLANG_AST_H
-#define ZLANG_AST_H
+#pragma once
 
 #include "lexer/lexer.h"
 
@@ -145,5 +144,3 @@ ast_node_t ast_create_block(ast_node_t *stmts, int num_stmts);
 /// @return ast_node_t - The AST node.
 ///
 ast_node_t ast_create_assign(char *name, ast_node_t val);
-
-#endif // ZLANG_AST_H

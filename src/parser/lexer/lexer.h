@@ -16,8 +16,7 @@
 /// You should have received a copy of the GNU General Public License
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-#ifndef ZLANG_LEXER_H
-#define ZLANG_LEXER_H
+#pragma once
 
 #include <stdbool.h>
 #include <stdio.h>
@@ -101,5 +100,3 @@ int lexer_get_column(lexer_t lexer);
 /// @return token_t - The next token in the file.
 ///
 token_t lexer_next_token(lexer_t lexer);
-
-#endif // ZLANG_LEXER_H

@@ -18,8 +18,7 @@
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ///
 
-#ifndef ZLANG_PARSER_H
-#define ZLANG_PARSER_H
+#pragma once
 
 #include "ast.h"
 
@@ -213,5 +212,3 @@ ast_node_t parse_func_call(parser_t parser);
 /// @return ast_node_t - The parsed program.
 ///
 ast_node_t parse_program(parser_t parser);
-
-#endif // ZLANG_PARSER_H

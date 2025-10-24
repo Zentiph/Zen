@@ -18,8 +18,7 @@
 /// along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ///
 
-#ifndef ZLANG_TOKEN_H
-#define ZLANG_TOKEN_H
+#pragma once
 
 #include <stdbool.h>
 
@@ -133,5 +132,3 @@ const char *token_get_lexeme(const token_t token);
 /// @return size_t - The length of the token.
 ///
 size_t token_get_length(const token_t token);
-
-#endif // ZLANG_TOKEN_H

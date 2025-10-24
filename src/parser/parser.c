@@ -24,7 +24,11 @@
 #include <string.h>
 
 #include "../internals.h"
+#pragma GCC dependency "../internals.c"
 #include "lexer/token.h"
+#pragma GCC dependency "lexer/token.c"
+#include "lexer/lexer.h"
+#pragma GCC dependency "lexer/lexer.c"
 
 #include "parser.h"
 
@@ -148,7 +152,7 @@ ast_node_t parse_primary(parser_t parser) {
          if (!parser_check(parser, TOKEN_RT_PAREN)) {
             do {
                ast_node_t arg = parse_expr(parser);
-               args = realloc(args, sizeof(ast_node_t) * arg_count++);
+               args = realloc(args, sizeof(ast_node_t) * ++arg_count);
                args[arg_count - 1] = arg;
             } while (parser_match(parser, TOKEN_COMMA));
          }

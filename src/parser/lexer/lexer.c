@@ -590,7 +590,7 @@ static const token_t lex_single_symbol(lexer_t lexer, char current) {
 }
 
 const lexer_t lexer_create(FILE *fp, char *filename) {
-   const lexer_t lexer = (lexer_t)malloc(sizeof(*lexer));
+   const lexer_t lexer = malloc(sizeof(*lexer));
    if (!lexer)
       return NULL;
 

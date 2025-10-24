@@ -34,14 +34,14 @@ static char *_dupstr(const char *restrict s) {
    if (!s)
       return NULL;
    size_t n = strlen(s) + 1;
-   char *p = (char *)malloc(n);
+   char *p = malloc(n);
    if (p)
       memcpy(p, s, n);
    return p;
 }
 
 const token_t token_create(const Token type, const char *lexeme) {
-   token_t token = (token_t)malloc(sizeof(*token));
+   token_t token = malloc(sizeof(*token));
    if (!token)
       return NULL;
 

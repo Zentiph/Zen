@@ -78,14 +78,14 @@ struct ast_node_s {
 
 ast_node_t ast_create_number(double val) {
    ast_node_t node = malloc(sizeof(ast_node_t));
-   node->type = AST_NUM;
+   node->type = AST_NUMBER;
    node->num.val = val;
    return node;
 }
 
 ast_node_t ast_create_identifier(char *name) {
    ast_node_t node = malloc(sizeof(ast_node_t));
-   node->type = AST_ID;
+   node->type = AST_IDENTIFIER;
    node->id.name = name;
    return node;
 }

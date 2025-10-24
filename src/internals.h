@@ -22,6 +22,6 @@
 #ifndef ZLANG_INTERNALS_H
 #define ZLANG_INTERNALS_H
 
-char *dupstr(const char *__restrict str);
+char *zlang_strdup(const char *__restrict str);
 
 #endif // ZLANG_INTERNALS_H

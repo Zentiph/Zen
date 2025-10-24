@@ -33,44 +33,44 @@
 // Solution modified from Terrence M on stackoverflow:
 // https://stackoverflow.com/a/10966395
 #define ZLANG__FOREACH_TOKEN(TOKEN)                                            \
-   TOKEN(TOK_KW)                                                               \
-   TOKEN(TOK_COMMENT)                                                          \
-   TOKEN(TOK_ID)                                                               \
-   TOKEN(TOK_NUM)                                                              \
-   TOKEN(TOK_STR)                                                              \
-   TOKEN(TOK_ASSIGN)                                                           \
-   TOKEN(TOK_ADD)                                                              \
-   TOKEN(TOK_SUB)                                                              \
-   TOKEN(TOK_MUL)                                                              \
-   TOKEN(TOK_DIV)                                                              \
-   TOKEN(TOK_MOD)                                                              \
-   TOKEN(TOK_ADD_ASSIGN)                                                       \
-   TOKEN(TOK_SUB_ASSIGN)                                                       \
-   TOKEN(TOK_MUL_ASSIGN)                                                       \
-   TOKEN(TOK_DIV_ASSIGN)                                                       \
-   TOKEN(TOK_MOD_ASSIGN)                                                       \
-   TOKEN(TOK_AND)                                                              \
-   TOKEN(TOK_OR)                                                               \
-   TOKEN(TOK_NOT)                                                              \
-   TOKEN(TOK_EQ)                                                               \
-   TOKEN(TOK_NE)                                                               \
-   TOKEN(TOK_LT)                                                               \
-   TOKEN(TOK_GT)                                                               \
-   TOKEN(TOK_LE)                                                               \
-   TOKEN(TOK_GE)                                                               \
-   TOKEN(TOK_LT_PAREN)                                                         \
-   TOKEN(TOK_RT_PAREN)                                                         \
-   TOKEN(TOK_LT_BRACK)                                                         \
-   TOKEN(TOK_RT_BRACK)                                                         \
-   TOKEN(TOK_LT_BRACE)                                                         \
-   TOKEN(TOK_RT_BRACE)                                                         \
-   TOKEN(TOK_ARROW)                                                            \
-   TOKEN(TOK_DBL_ARROW)                                                        \
-   TOKEN(TOK_DOT)                                                              \
-   TOKEN(TOK_COMMA)                                                            \
-   TOKEN(TOK_NEWLINE)                                                          \
-   TOKEN(TOK_EOF)                                                              \
-   TOKEN(TOK_INVALID)
+   TOKEN(TOKEN_KEYWORD)                                                        \
+   TOKEN(TOKEN_COMMENT)                                                        \
+   TOKEN(TOKEN_IDENTIFIER)                                                     \
+   TOKEN(TOKEN_NUMBER)                                                         \
+   TOKEN(TOKEN_STRING)                                                         \
+   TOKEN(TOKEN_ASSIGN)                                                         \
+   TOKEN(TOKEN_ADD)                                                            \
+   TOKEN(TOKEN_SUB)                                                            \
+   TOKEN(TOKEN_MUL)                                                            \
+   TOKEN(TOKEN_DIV)                                                            \
+   TOKEN(TOKEN_MOD)                                                            \
+   TOKEN(TOKEN_ADD_ASSIGN)                                                     \
+   TOKEN(TOKEN_SUB_ASSIGN)                                                     \
+   TOKEN(TOKEN_MUL_ASSIGN)                                                     \
+   TOKEN(TOKEN_DIV_ASSIGN)                                                     \
+   TOKEN(TOKEN_MOD_ASSIGN)                                                     \
+   TOKEN(TOKEN_AND)                                                            \
+   TOKEN(TOKEN_OR)                                                             \
+   TOKEN(TOKEN_NOT)                                                            \
+   TOKEN(TOKEN_EQ)                                                             \
+   TOKEN(TOKEN_NE)                                                             \
+   TOKEN(TOKEN_LT)                                                             \
+   TOKEN(TOKEN_GT)                                                             \
+   TOKEN(TOKEN_LE)                                                             \
+   TOKEN(TOKEN_GE)                                                             \
+   TOKEN(TOKEN_LT_PAREN)                                                       \
+   TOKEN(TOKEN_RT_PAREN)                                                       \
+   TOKEN(TOKEN_LT_BRACK)                                                       \
+   TOKEN(TOKEN_RT_BRACK)                                                       \
+   TOKEN(TOKEN_LT_BRACE)                                                       \
+   TOKEN(TOKEN_RT_BRACE)                                                       \
+   TOKEN(TOKEN_ARROW)                                                          \
+   TOKEN(TOKEN_DBL_ARROW)                                                      \
+   TOKEN(TOKEN_DOT)                                                            \
+   TOKEN(TOKEN_COMMA)                                                          \
+   TOKEN(TOKEN_NEWLINE)                                                        \
+   TOKEN(TOKEN_EOF)                                                            \
+   TOKEN(TOKEN_INVALID)
 
 #define ZLANG__GENERATE_ENUM(ENUM) ENUM,
 #define ZLANG__GENERATE_STR(STR) #STR,
@@ -79,7 +79,8 @@
 typedef enum { ZLANG__FOREACH_TOKEN(ZLANG__GENERATE_ENUM) } Token;
 
 /// String representations of Token enum values stored at their numeric value.
-static const char *TOK_TO_STR[] = {ZLANG__FOREACH_TOKEN(ZLANG__GENERATE_STR)};
+static const char *TOKEN_TO_STRING[] = {
+   ZLANG__FOREACH_TOKEN(ZLANG__GENERATE_STR)};
 
 /// A token, which consists of a type and potentially a string value.
 typedef struct token_s *token_t;
@@ -106,7 +107,7 @@ void token_destroy(const token_t token);
 /// @param token        - The token to get the type of.
 /// @return const Token - The token type.
 ///
-const Token token_type(const token_t token);
+const Token token_get_type(const token_t token);
 
 ///
 /// @brief Check if a token has a variable lexeme.
@@ -123,7 +124,7 @@ bool token_has_lexeme(const token_t token);
 /// @param token        - The token to get the lexeme of.
 /// @return const char* - The lexeme of the token, or NULL if it does not exist.
 ///
-const char *token_lexeme(const token_t token);
+const char *token_get_lexeme(const token_t token);
 
 ///
 /// @brief Get the length of a token.
@@ -131,6 +132,6 @@ const char *token_lexeme(const token_t token);
 /// @param token   - The token to get the length of.
 /// @return size_t - The length of the token.
 ///
-size_t token_len(const token_t token);
+size_t token_get_length(const token_t token);
 
 #endif // ZLANG_TOKEN_H

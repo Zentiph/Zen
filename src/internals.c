@@ -24,7 +24,7 @@
 
 #include "internals.h"
 
-char *dupstr(const char *restrict str) {
+char *zlang_strdup(const char *restrict str) {
    if (!str)
       return NULL;
 

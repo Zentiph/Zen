@@ -301,7 +301,7 @@ static const token_t lex_single_line_comment(lexer_t lexer) {
    while (lexer_current(lexer) != '\n' && lexer_current(lexer) != EOF)
       _tbuf_put(lexer, lexer_pre_advance(lexer));
 
-   return _make_token(TOK_COMMENT, lexer->tbuf, lexer->tlen);
+   return _make_token(TOKEN_COMMENT, lexer->tbuf, lexer->tlen);
 }
 
 static const token_t lex_multi_line_comment(lexer_t lexer) {
@@ -319,7 +319,7 @@ static const token_t lex_multi_line_comment(lexer_t lexer) {
       _tbuf_put(lexer, lexer_pre_advance(lexer));
    }
 
-   return _make_token(TOK_COMMENT, lexer->tbuf, lexer->tlen);
+   return _make_token(TOKEN_COMMENT, lexer->tbuf, lexer->tlen);
 }
 
 static const token_t lex_identifier(lexer_t lexer) {
@@ -335,11 +335,11 @@ static const token_t lex_identifier(lexer_t lexer) {
 
    for (int i = 0; KW_TAB[i] != NULL; i++) {
       if (strcmp(lexer->tbuf, KW_TAB[i]) == 0) {
-         return _make_token(TOK_KW, lexer->tbuf, lexer->tlen);
+         return _make_token(TOKEN_KEYWORD, lexer->tbuf, lexer->tlen);
       }
    }
 
-   return _make_token(TOK_ID, lexer->tbuf, lexer->tlen);
+   return _make_token(TOKEN_IDENTIFIER, lexer->tbuf, lexer->tlen);
 }
 
 static const token_t lex_string(lexer_t lexer, char entry_quote) {
@@ -387,13 +387,13 @@ static const token_t lex_string(lexer_t lexer, char entry_quote) {
       }
    }
 
-   return _make_token(TOK_STR, lexer->tbuf, lexer->tlen);
+   return _make_token(TOKEN_STRING, lexer->tbuf, lexer->tlen);
 }
 static const token_t lex_number_or_dot(lexer_t lexer, char current) {
    if (current == '.' && !isdigit((unsigned char)lexer_peek(lexer))) {
       _tbuf_put(lexer, '.');
       lexer_skip(lexer, 1);
-      return _make_token(TOK_DOT, lexer->tbuf, lexer->tlen);
+      return _make_token(TOKEN_DOT, lexer->tbuf, lexer->tlen);
    }
 
    char prev;
@@ -416,13 +416,13 @@ static const token_t lex_number_or_dot(lexer_t lexer, char current) {
    if (prev == '.')
       lexer_unget(lexer);
 
-   return _make_token(TOK_NUM, lexer->tbuf, lexer->tlen);
+   return _make_token(TOKEN_NUMBER, lexer->tbuf, lexer->tlen);
 }
 
 static const token_t lex_arrow(lexer_t lexer, char arrow_symbol) {
    _tbuf_put2(lexer, arrow_symbol, '>');
    lexer_skip(lexer, 2);
-   return _make_token(TOK_ARROW, lexer->tbuf, lexer->tlen);
+   return _make_token(TOKEN_ARROW, lexer->tbuf, lexer->tlen);
 }
 
 static const token_t lex_comparison_op(lexer_t lexer, char current) {
@@ -434,19 +434,19 @@ static const token_t lex_comparison_op(lexer_t lexer, char current) {
       Token type;
       switch (current) {
       case '=':
-         type = TOK_EQ;
+         type = TOKEN_EQ;
          break;
       case '!':
-         type = TOK_NE;
+         type = TOKEN_NE;
          break;
       case '<':
-         type = TOK_LE;
+         type = TOKEN_LE;
          break;
       case '>':
-         type = TOK_GE;
+         type = TOKEN_GE;
          break;
       default:
-         type = TOK_INVALID;
+         type = TOKEN_INVALID;
          break;
       }
 
@@ -459,19 +459,19 @@ static const token_t lex_comparison_op(lexer_t lexer, char current) {
    Token type;
    switch (current) {
    case '=':
-      type = TOK_ASSIGN;
+      type = TOKEN_ASSIGN;
       break;
    case '!':
-      type = TOK_NOT;
+      type = TOKEN_NOT;
       break;
    case '<':
-      type = TOK_LT;
+      type = TOKEN_LT;
       break;
    case '>':
-      type = TOK_GT;
+      type = TOKEN_GT;
       break;
    default:
-      type = TOK_INVALID;
+      type = TOKEN_INVALID;
       break;
    }
 
@@ -487,22 +487,22 @@ static const token_t lex_binary_op(lexer_t lexer, char current) {
       Token type;
       switch (current) {
       case '+':
-         type = TOK_ADD_ASSIGN;
+         type = TOKEN_ADD_ASSIGN;
          break;
       case '-':
-         type = TOK_SUB_ASSIGN;
+         type = TOKEN_SUB_ASSIGN;
          break;
       case '*':
-         type = TOK_MUL_ASSIGN;
+         type = TOKEN_MUL_ASSIGN;
          break;
       case '/':
-         type = TOK_DIV_ASSIGN;
+         type = TOKEN_DIV_ASSIGN;
          break;
       case '%':
-         type = TOK_MOD_ASSIGN;
+         type = TOKEN_MOD_ASSIGN;
          break;
       default:
-         type = TOK_INVALID;
+         type = TOKEN_INVALID;
          break;
       }
 
@@ -516,22 +516,22 @@ static const token_t lex_binary_op(lexer_t lexer, char current) {
    Token type;
    switch (current) {
    case '+':
-      type = TOK_ADD;
+      type = TOKEN_ADD;
       break;
    case '-':
-      type = TOK_SUB;
+      type = TOKEN_SUB;
       break;
    case '*':
-      type = TOK_MUL;
+      type = TOKEN_MUL;
       break;
    case '/':
-      type = TOK_DIV;
+      type = TOKEN_DIV;
       break;
    case '%':
-      type = TOK_MOD;
+      type = TOKEN_MOD;
       break;
    default:
-      type = TOK_INVALID;
+      type = TOKEN_INVALID;
       break;
    }
 
@@ -543,9 +543,9 @@ static const token_t lex_logic_op(lexer_t lexer, char symbol) {
    lexer_skip(lexer, 2);
 
    if (symbol == '&')
-      return _make_token(TOK_AND, lexer->tbuf, lexer->tlen);
+      return _make_token(TOKEN_AND, lexer->tbuf, lexer->tlen);
    else
-      return _make_token(TOK_OR, lexer->tbuf, lexer->tlen);
+      return _make_token(TOKEN_OR, lexer->tbuf, lexer->tlen);
 }
 
 static const token_t lex_single_symbol(lexer_t lexer, char current) {
@@ -555,34 +555,34 @@ static const token_t lex_single_symbol(lexer_t lexer, char current) {
    Token type;
    switch (current) {
    case '!':
-      type = TOK_NOT;
+      type = TOKEN_NOT;
       break;
    case ',':
-      type = TOK_COMMA;
+      type = TOKEN_COMMA;
       break;
    case '(':
-      type = TOK_LT_PAREN;
+      type = TOKEN_LT_PAREN;
       break;
    case ')':
-      type = TOK_RT_PAREN;
+      type = TOKEN_RT_PAREN;
       break;
    case '[':
-      type = TOK_LT_BRACK;
+      type = TOKEN_LT_BRACK;
       break;
    case ']':
-      type = TOK_RT_BRACK;
+      type = TOKEN_RT_BRACK;
       break;
    case '{':
-      type = TOK_LT_BRACE;
+      type = TOKEN_LT_BRACE;
       break;
    case '}':
-      type = TOK_RT_BRACE;
+      type = TOKEN_RT_BRACE;
       break;
    case '\n':
-      type = TOK_NEWLINE;
+      type = TOKEN_NEWLINE;
       break;
    default:
-      type = TOK_INVALID;
+      type = TOKEN_INVALID;
       break;
    }
 
@@ -619,14 +619,20 @@ void lexer_destroy(const lexer_t lexer) {
    free(lexer);
 }
 
-token_t lexer_next(const lexer_t lexer) {
+const char *lexer_get_filename(lexer_t lexer) { return lexer->filename; }
+
+int lexer_get_line(lexer_t lexer) { return lexer->line; }
+
+int lexer_get_column(lexer_t lexer) { return lexer->col; }
+
+token_t lexer_get_next(const lexer_t lexer) {
    _tbuf_reset(lexer);
 
    lexer_skip_whitespace(lexer);
 
    int cc = lexer_current(lexer);
    if (cc == EOF) {
-      return _make_token(TOK_EOF, lexer->tbuf, lexer->tlen);
+      return _make_token(TOKEN_EOF, lexer->tbuf, lexer->tlen);
    }
 
    char cur = (char)cc;

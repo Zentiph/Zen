@@ -26,8 +26,8 @@
 
 /// An enum of every type of AST node.
 typedef enum {
-   AST_NUM,
-   AST_ID,
+   AST_NUMBER,
+   AST_IDENTIFIER,
    AST_BINARY,
    AST_UNARY,
    AST_IF,

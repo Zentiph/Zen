@@ -22,6 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../../internals.h"
+
 #include "token.h"
 
 struct token_s {
@@ -30,23 +32,13 @@ struct token_s {
    size_t len;
 };
 
-static char *_dupstr(const char *restrict s) {
-   if (!s)
-      return NULL;
-   size_t n = strlen(s) + 1;
-   char *p = malloc(n);
-   if (p)
-      memcpy(p, s, n);
-   return p;
-}
-
 const token_t token_create(const Token type, const char *lexeme) {
    token_t token = malloc(sizeof(*token));
    if (!token)
       return NULL;
 
    token->type = type;
-   token->lexeme = _dupstr(lexeme);
+   token->lexeme = zlang_strdup(lexeme);
    if (lexeme && !token->lexeme) { // _dupstr() failed
       free(token);
       return NULL;
@@ -64,7 +56,10 @@ void token_destroy(const token_t token) {
    free(token);
 }
 
-const Token token_type(const token_t token) { return token->type; }
+const Token token_get_type(const token_t token) { return token->type; }
+
 bool token_has_lexeme(const token_t token) { return token->lexeme != NULL; }
-const char *token_lexeme(const token_t token) { return token->lexeme; }
-size_t token_len(const token_t token) { return token->len; }
+
+const char *token_get_lexeme(const token_t token) { return token->lexeme; }
+
+size_t token_get_length(const token_t token) { return token->len; }

@@ -71,11 +71,35 @@ const lexer_t lexer_create(FILE *__restrict fp, char *__restrict filename);
 void lexer_destroy(const lexer_t lexer);
 
 ///
+/// @brief Get the name of the file the lexer is examining.
+///
+/// @param lexer        - The lexer.
+/// @return const char* - The filename.
+///
+const char *lexer_get_filename(lexer_t lexer);
+
+///
+/// @brief Get the current line number the lexer is examining.
+///
+/// @param lexer - The lexer.
+/// @return int  - The line number.
+///
+int lexer_get_line(lexer_t lexer);
+
+///
+/// @brief Get the current column number the lexer is examining.
+///
+/// @param lexer - The lexer.
+/// @return int  - The column number.
+///
+int lexer_get_column(lexer_t lexer);
+
+///
 /// @brief Get the next token in the file.
 ///
 /// @param lexer    - The lexer.
 /// @return token_t - The next token in the file.
 ///
-token_t lexer_next(lexer_t lexer);
+token_t lexer_next_token(lexer_t lexer);
 
 #endif // ZLANG_LEXER_H
